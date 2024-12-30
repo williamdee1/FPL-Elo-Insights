@@ -35,33 +35,13 @@ This project includes the following key data tables:
 *   **Historical Elo:** Uses historical Elo ratings from the time of each match for accurate team strength assessment.
 *   **Current Elo (for future matches):** If a match hasn't been played yet, the current day's Elo rating is used as a proxy for team strength.
 *   **Player-Centric Analysis:** Allows for in-depth analysis of individual player performance, linked to their FPL points and match statistics.
-*   **[Add other key features here]**
 
-## Installation
-
-<!-- Provide instructions on how to set up and run your project -->
-
-1. Clone the repository:
-
-    ```bash
-    git clone https://github.com/your-username/FPL-Elo-Insights.git
-    ```
-
-2. Install the required dependencies:
-
-    ```bash
-    pip install -r requirements.txt
-    ```
-
-    <!-- Assuming you are using Python and have a requirements.txt file -->
-
-3. [Add any other installation steps, such as setting up API keys or database connections]
 
 ## Usage
 
 <!-- Provide examples of how to use your code or access the data -->
 
-[Add examples of how to query the data, run analysis scripts, or interact with your project]
+
 
 ## Known Issues
 
@@ -76,27 +56,11 @@ This project includes the following key data tables:
     *   `away_own_goals`
     *   `home_bonus_points`
     *   `away_bonus_points`
-*   **FotMob ID Removal:** The `fotmob_id` column in the `matches` table is intended for internal use and should be removed before sharing the repository publicly.
-*   **[Add any other known issues here]**
 
-## Contributing
-
-Contributions are welcome! Please read the [CONTRIBUTING.md](CONTRIBUTING.md) file for guidelines on how to contribute. <!-- Create a CONTRIBUTING.md if you want to accept contributions -->
-
-## License
-
-This project is licensed under the [Your License Name] License - see the [LICENSE](LICENSE) file for details. <!-- Add a LICENSE file to your project -->
-
-## Acknowledgements
-
-*   [Club Elo](http://clubelo.com/) for the historical and current Elo ratings.
-*   [Fantasy Premier League](https://fantasy.premierleague.com/) for the FPL API.
-*   [Any other libraries or resources you want to acknowledge]
 
 ---
-
 **Key Changes:**
 
 *   **Table Descriptions:** I've added details about the linked columns and how they establish relationships between the tables. For example, in the `matches` table description, I've mentioned that `home_team` and `away_team` link to the `teams` table. I've used similar explanations for other tables.
 
-I believe this provides a clearer understanding of how the data is structured and how the tables relate to each other. Let me know what you think, and we can continue to refine it further.
+
