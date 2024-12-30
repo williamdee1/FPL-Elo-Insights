@@ -1,6 +1,6 @@
 # FPL-Elo-Insights: A Comprehensive Dataset for Premier League Analysis
 
-This repository houses a meticulously curated dataset that combines Fantasy Premier League (FPL) data, manually collected match statistics, and historical Elo ratings to provide a powerful resource for in-depth football analysis, particularly for the English Premier League.
+This repository houses a meticulously curated dataset that combines Fantasy Premier League (FPL) data, manually collected match statistics, and historical Elo ratings to provide a powerful resource for in-depth football analysis, particularly for the FPL
 
 ## Data Updates and Availability
 
@@ -8,13 +8,11 @@ The dataset is automatically refreshed twice daily at:
 - 5:00 AM UTC
 - 5:00 PM UTC
 
-This ensures that you always have access to the most recent match statistics, FPL data, and Elo ratings.
-
 ## Data Format
 
 All data is available in two formats:
 - CSV files for easy import into data analysis tools
-- SQL database files (both MySQL and PostgreSQL versions) for direct database integration
+- SQL DB files 
 
 ## Table Overview
 
@@ -27,14 +25,14 @@ All data is available in two formats:
 | teams | Team information and strength indicators | Team details, strength ratings, and Elo scores | Team analysis, fixture difficulty assessment, and performance tracking |
 
 ## Using
-Feel free to use the data from this repository in whatever way works best for you—whether for your website, blog posts, or other projects. If possible, I’d greatly appreciate it if you could include a link back to this repository as the data source. Without copying the amazing https://github.com/vaastav/Fantasy-Premier-League. I’d be happy to feature a link to your post or site as a notable usage of the repository!
+Feel free to use the data from this repository in whatever way works best for you—whether for your website, blog posts, or other projects. If possible, I’d greatly appreciate it if you could include a link back to this repository as the data source. Without completly copying the amazing [vaastav/Fantasy-Premier-League](https://github.com/vaastav/Fantasy-Premier-League). I’d be happy to feature a link to your post or site as a notable usage of the repository!
 
 ## Data Sources
 
 This project leverages data from the following sources:
 
-*   **Manually Curated Match Statistics:** This dataset includes a wide array of detailed match events, player statistics (e.g., touches, duels, shots, etc.), and other relevant football data. It has been meticulously collected and verified to ensure accuracy.
-*   **Club Elo Ratings:** Historical and current Elo ratings for all Premier League teams are sourced from [ClubElo.com](http://clubelo.com/), providing a robust measure of team strength.
+*   **Manually Curated Match Statistics:** This dataset includes a wide array of detailed match events, player statistics (e.g., touches, duels, shots, etc.), and other relevant football data. 
+*   **Club Elo Ratings:** Historical and current Elo ratings for all Premier League teams are sourced from [ClubElo.com](http://clubelo.com/).
 *   **Official Fantasy Premier League API:**  The official FPL API provides a wealth of data, including player statistics, weekly points, form, cost, and ownership percentages.
 
 ## Data Tables Explained
@@ -255,22 +253,6 @@ This table contains information about each team from the FPL API:
 
 *   `id` links to `home_team` and `away_team` in the `matches` table.
 *   `id` also links to `team_id` in the `players` table.
-
-## Potential Use Cases
-
-*   **FPL Strategy:**
-    *   Identify undervalued players based on performance metrics and Elo ratings.
-    *   Optimize team selection by considering opponent strength (Elo) and detailed match statistics.
-    *   Analyze captain choices based on a player's expected performance against teams of varying strengths.
-*   **Performance Analysis:**
-    *   Investigate the relationship between specific player statistics (e.g., successful dribbles, tackles won) and FPL points.
-    *   Study how team Elo ratings correlate with match outcomes and player performance.
-    *   Build predictive models to forecast player points and match results.
-*   **Scouting and Recruitment:**
-    *   Identify players who consistently outperform their team's Elo rating.
-    *   Analyze player performance against teams of different strengths to assess adaptability.
-*   **Match Prediction:**
-    *   Develop models that predict match outcomes based on team Elo ratings, detailed match statistics, and individual player performance data.
 
 ## Known Issues
 
