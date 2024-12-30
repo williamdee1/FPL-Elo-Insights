@@ -64,7 +64,7 @@ def export_table(table_name: str, season: str):
 
 def main():
     """Main function to export all tables."""
-    season = "2023-2024"
+    season = "2024-2025"
     tables = ["matches", "playermatchstats", "players", "playerstats", "teams"]
     
     for table in tables:
