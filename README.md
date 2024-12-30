@@ -2,15 +2,32 @@
 
 This repository houses a meticulously curated dataset that combines Fantasy Premier League (FPL) data, manually collected match statistics, and historical Elo ratings to provide a powerful resource for in-depth football analysis, particularly for the English Premier League.
 
-## Dive Deeper into Player and Team Performance
+## Data Updates and Availability
 
-**FPL-Elo-Insights** empowers you to go beyond basic statistics and understand the factors driving player and team success. By integrating these diverse data sources, you can:
+The dataset is automatically refreshed twice daily at:
+- 5:00 AM UTC
+- 5:00 PM UTC
 
-*   **Uncover Correlations:** Analyze how individual player performance metrics (ground duels won, accurate passes, etc.) correlate with FPL points and team Elo ratings.
-*   **Evaluate Team Strength:** Assess team strength using historical Elo ratings from [ClubElo.com](http://clubelo.com/) for past matches and current Elo ratings for upcoming fixtures.
-*   **Enhance FPL Strategy:** Make more informed decisions in Fantasy Premier League by considering detailed player statistics and team strength indicators.
-*   **Track Player Development:** Connect a player like Erling Haaland to his weekly FPL points and all his associated match statistics, allowing you to track his performance trajectory throughout the season.
-*   **Predict Match Outcomes:** Develop models that predict match outcomes by incorporating detailed match events, player stats, and team Elo ratings.
+This ensures that you always have access to the most recent match statistics, FPL data, and Elo ratings.
+
+## Data Format
+
+All data is available in two formats:
+- CSV files for easy import into data analysis tools
+- SQL database files (both MySQL and PostgreSQL versions) for direct database integration
+
+## Table Overview
+
+| Table Name | Description | Key Features | Primary Use Cases |
+|------------|-------------|--------------|-------------------|
+| matches | Comprehensive match-level data | Contains detailed statistics for each match including scores, possession, shots, and team performance metrics | Match analysis, team performance tracking, and fixture difficulty assessment |
+| playermatchstats | Detailed player statistics for each match | Individual player performance metrics including goals, assists, touches, passes, and defensive actions | Player performance analysis, scouting, and historical tracking |
+| players | Basic player information from FPL API | Core player details including name, position, and team affiliation | Player identification and basic information lookup |
+| playerstats | FPL-specific player statistics | Extensive FPL metrics including costs, ownership, form, and expected performance indicators | FPL strategy, player valuation, and transfer planning |
+| teams | Team information and strength indicators | Team details, strength ratings, and Elo scores | Team analysis, fixture difficulty assessment, and performance tracking |
+
+## Using
+Feel free to use the data from this repository in whatever way works best for you—whether for your website, blog posts, or other projects. If possible, I’d greatly appreciate it if you could include a link back to this repository as the data source. Without copying the amazing https://github.com/vaastav/Fantasy-Premier-League. I’d be happy to feature a link to your post or site as a notable usage of the repository!
 
 ## Data Sources
 
@@ -24,7 +41,7 @@ This project leverages data from the following sources:
 
 The repository contains the following interconnected data tables:
 
-### `matches.csv`
+### `matches`
 
 This table contains comprehensive match-level data, including:
 
@@ -94,7 +111,7 @@ This table contains comprehensive match-level data, including:
 *   `home_team` and `away_team` link to the `id` column in the `teams` table.
 *   `match_id` links to the `match_id` column in the `playermatchstats` table.
 
-### `playermatchstats.csv`
+### `playermatchstats`
 
 This table provides detailed player-level statistics for each match:
 
@@ -128,4 +145,149 @@ This table provides detailed player-level statistics for each match:
 *   **`dribbled_past`:** Times the player was dribbled past.
 *   **`duels_won`:** Duels won by the player.
 *   **`duels_lost`:** Duels lost by the player.
-*   **`ground_duels_won`:** Ground du
+*   **`ground_duels_won`:** Ground duels won by the player.
+*   **`ground_duels_won_percent`:** Percentage of ground duels won by the player.
+*   **`aerial_duels_won`:** Aerial duels won by the player.
+*   **`aerial_duels_won_percent`:** Percentage of aerial duels won by the player.
+*   **`was_fouled`:** Times the player was fouled.
+*   **`fouls_committed`:** Fouls committed by the player.
+*   **`saves`:** Saves made by the player (typically for goalkeepers).
+*   **`goals_conceded`:** Goals conceded by the player (typically for goalkeepers and defenders).
+*   **`xgot_faced`:** Expected goals on target faced by the player (typically for goalkeepers).
+*   **`goals_prevented`:** Goals prevented by the player (typically for goalkeepers).
+*   **`sweeper_actions`:** Sweeper actions performed by the player (typically for goalkeepers).
+*   **`gk_accurate_passes`:** Accurate passes made by the goalkeeper.
+*   **`gk_accurate_long_balls`:** Accurate long balls made by the goalkeeper.
+
+**Links:**
+
+*   `player_id` links to the `id` column in the `players` table.
+*   `match_id` links to the `match_id` column in the `matches` table.
+
+### `players`
+
+This table contains basic information about each player from the FPL API:
+
+*   **`player_code`:** The unique code for the player in the FPL API.
+*   **`player_id`:** A unique identifier for each player within this dataset.
+*   **`first_name`:** The player's first name.
+*   **`second_name`:** The player's second name.
+*   **`web_name`:** The player's name as it appears on the FPL website.
+*   **`team_id`:** The ID of the team the player belongs to (referencing the `teams` table).
+*   **`position`:** The player's position (e.g., Goalkeeper, Defender, Midfielder, Forward).
+
+**Links:**
+
+*   `player_id` links to the `player_id` column in the `playermatchstats` table.
+*   `team_id` links to the `id` column in the `teams` table.
+
+### `playerstats`
+
+This table stores a wide range of FPL player statistics:
+
+*   **`id`:** The ID of the player (referencing the `player_id` in the `players` table).
+*   **`status`:** The player's availability status (e.g., available, injured, suspended).
+*   **`chance_of_playing_next_round`:** The player's chance of playing in the next round (percentage).
+*   **`chance_of_playing_this_round`:** The player's chance of playing in the current round (percentage).
+*   **`now_cost`:** The player's current cost in the FPL game.
+*   **`now_cost_rank`:** The player's cost rank among all players.
+*   **`now_cost_rank_type`:** The player's cost rank within their position.
+*   **`cost_change_event`:** The change in the player's cost since the last gameweek.
+*   **`cost_change_event_fall`:** The fall in the player's cost since the last gameweek.
+*   **`cost_change_start`:** The change in the player's cost since the start of the season.
+*   **`cost_change_start_fall`:** The fall in the player's cost since the start of the season.
+*   **`selected_by_percent`:** The percentage of FPL managers who have selected the player.
+*   **`selected_rank`:** The player's rank based on selection percentage.
+*   **`selected_rank_type`:** The player's rank based on selection percentage within their position.
+*   **`total_points`:** The player's total FPL points for the season.
+*   **`event_points`:** The player's FPL points for the current gameweek.
+*   **`points_per_game`:** The player's average FPL points per game.
+*   **`points_per_game_rank`:** The player's rank based on average points per game.
+*   **`points_per_game_rank_type`:** The player's rank based on average points per game within their position.
+*   **`bonus`:** Bonus points awarded to the player.
+*   **`bps`:** Bonus Points System score.
+*   **`form`:** The player's recent form, based on average points over the last few gameweeks.
+*   **`form_rank`:** The player's form rank.
+*   **`form_rank_type`:** The player's form rank within their position.
+*   **`value_form`:** A measure of the player's value based on recent form and cost.
+*   **`value_season`:** A measure of the player's value based on season performance and cost.
+*   **`dreamteam_count`:** The number of times the player has been in the FPL Dream Team.
+*   **`transfers_in`:** Total transfers in for the player.
+*   **`transfers_in_event`:** Transfers in for the player in the current gameweek.
+*   **`transfers_out`:** Total transfers out for the player.
+*   **`transfers_out_event`:** Transfers out for the player in the current gameweek.
+*   **`ep_next`:** Expected points for the player in the next gameweek.
+*   **`ep_this`:** Expected points for the player in the current gameweek.
+*   **`expected_goals`, `expected_assists`, `expected_goal_involvements`, `expected_goals_conceded`:** Expected performance metrics.
+*   **`expected_goals_per_90`, `expected_assists_per_90`, `expected_goal_involvements_per_90`, `expected_goals_conceded_per_90`:** Expected performance metrics per 90 minutes.
+*   **`influence`, `influence_rank`, `influence_rank_type`:** Measures of a player's influence on the game.
+*   **`creativity`, `creativity_rank`, `creativity_rank_type`:** Measures of a player's creativity.
+*   **`threat`, `threat_rank`, `threat_rank_type`:** Measures of a player's attacking threat.
+*   **`ict_index`, `ict_index_rank`, `ict_index_rank_type`:** ICT Index (Influence, Creativity, Threat) and its ranks.
+*   **`corners_and_indirect_freekicks_order`:**  Indicates if the player is likely to take corners and indirect freekicks.
+*   **`direct_freekicks_order`:** Indicates if the player is likely to take direct freekicks.
+*   **`penalties_order`:** Indicates if the player is likely to take penalties.
+*   **`gw`:** The gameweek these stats apply to.
+
+**Links:**
+
+*   `id` links to the `player_id` in the `players` table.
+
+### `teams`
+
+This table contains information about each team from the FPL API:
+
+*   **`code`:** The team's unique code in the FPL API.
+*   **`id`:** A unique identifier for each team within this dataset.
+*   **`name`:** The full name of the team.
+*   **`short_name`:** The short name (abbreviation) of the team.
+*   **`strength`:** Overall team strength (FPL rating).
+*   **`strength_overall_home`:** Overall team strength when playing at home (FPL rating).
+*   **`strength_overall_away`:** Overall team strength when playing away (FPL rating).
+*   **`strength_attack_home`:** Attacking strength when playing at home (FPL rating).
+*   **`strength_attack_away`:** Attacking strength when playing away (FPL rating).
+*   **`strength_defence_home`:** Defensive strength when playing at home (FPL rating).
+*   **`strength_defence_away`:** Defensive strength when playing away (FPL rating).
+*   **`pulse_id`:** The team's ID on Pulse Live (a sports data provider).
+*   **`elo`:** The team's Elo rating.
+
+**Links:**
+
+*   `id` links to `home_team` and `away_team` in the `matches` table.
+*   `id` also links to `team_id` in the `players` table.
+
+## Potential Use Cases
+
+*   **FPL Strategy:**
+    *   Identify undervalued players based on performance metrics and Elo ratings.
+    *   Optimize team selection by considering opponent strength (Elo) and detailed match statistics.
+    *   Analyze captain choices based on a player's expected performance against teams of varying strengths.
+*   **Performance Analysis:**
+    *   Investigate the relationship between specific player statistics (e.g., successful dribbles, tackles won) and FPL points.
+    *   Study how team Elo ratings correlate with match outcomes and player performance.
+    *   Build predictive models to forecast player points and match results.
+*   **Scouting and Recruitment:**
+    *   Identify players who consistently outperform their team's Elo rating.
+    *   Analyze player performance against teams of different strengths to assess adaptability.
+*   **Match Prediction:**
+    *   Develop models that predict match outcomes based on team Elo ratings, detailed match statistics, and individual player performance data.
+
+## Known Issues
+
+*   **Incomplete Match Data:** The `matches` table currently has some missing data in the following columns:
+    *   `home_team_difficulty`
+    *   `away_team_difficulty`
+    *   `home_penalties_missed`
+    *   `away_penalties_missed`
+    *   `home_penalties_saved`
+    *   `away_penalties_saved`
+    *   `home_own_goals`
+    *   `away_own_goals`
+    *   `home_bonus_points`
+    *   `away_bonus_points`
+
+## Contributing
+
+Contributions to this project are welcome! If you have suggestions for improvements, additional data sources, or want to help fill in the missing data, please feel free to open an issue 
+
+
