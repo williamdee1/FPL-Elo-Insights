@@ -1,5 +1,5 @@
 -- Data export from teams
--- Generated on 2024-12-30 05:07:25
+-- Generated on 2024-12-30 17:01:46
 
 DROP TABLE IF EXISTS teams;
 CREATE TABLE teams (
