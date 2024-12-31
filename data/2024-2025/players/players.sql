@@ -1,5 +1,5 @@
 -- Data export from players
--- Generated on 2024-12-30 17:01:46
+-- Generated on 2024-12-31 05:06:59
 
 DROP TABLE IF EXISTS players;
 CREATE TABLE players (
@@ -19,7 +19,7 @@ INSERT INTO players (player_code, player_id, first_name, second_name, web_name, 
 INSERT INTO players (player_code, player_id, first_name, second_name, web_name, team_id, position) VALUES ('168991', '76', 'Philip', 'Billing', 'Philip', '91', 'Midfielder');
 INSERT INTO players (player_code, player_id, first_name, second_name, web_name, team_id, position) VALUES ('123354', '40', 'Kortney', 'Hause', 'Hause', '7', 'Defender');
 INSERT INTO players (player_code, player_id, first_name, second_name, web_name, team_id, position) VALUES ('533463', '74', 'Dango', 'Ouattara', 'O.Dango', '91', 'Midfielder');
-INSERT INTO players (player_code, player_id, first_name, second_name, web_name, team_id, position) VALUES ('219924', '245', 'Issa', 'Diop', 'Diop', '54', 'Defender');
+INSERT INTO players (player_code, player_id, first_name, second_name, web_name, team_id, position) VALUES ('224995', '80', 'Luis', 'Sinisterra', 'Sinisterra', '91', 'Midfielder');
 INSERT INTO players (player_code, player_id, first_name, second_name, web_name, team_id, position) VALUES ('469247', '41', 'Samuel', 'Iling-Junior', 'Iling Jr', '7', 'Midfielder');
 INSERT INTO players (player_code, player_id, first_name, second_name, web_name, team_id, position) VALUES ('226944', '42', 'Boubacar', 'Kamara', 'Kamara', '7', 'Midfielder');
 INSERT INTO players (player_code, player_id, first_name, second_name, web_name, team_id, position) VALUES ('465390', '43', 'Kaine', 'Kesler-Hayden', 'Kesler-Hayden', '7', 'Defender');
@@ -57,7 +57,11 @@ INSERT INTO players (player_code, player_id, first_name, second_name, web_name, 
 INSERT INTO players (player_code, player_id, first_name, second_name, web_name, team_id, position) VALUES ('503139', '77', 'Alex', 'Scott', 'Scott', '91', 'Midfielder');
 INSERT INTO players (player_code, player_id, first_name, second_name, web_name, team_id, position) VALUES ('437730', '78', 'Antoine', 'Semenyo', 'Semenyo', '91', 'Midfielder');
 INSERT INTO players (player_code, player_id, first_name, second_name, web_name, team_id, position) VALUES ('221466', '79', 'Marcos', 'Senesi', 'Senesi', '91', 'Defender');
-INSERT INTO players (player_code, player_id, first_name, second_name, web_name, team_id, position) VALUES ('84939', '523', 'Danny', 'Ings', 'Ings', '21', 'Forward');
+INSERT INTO players (player_code, player_id, first_name, second_name, web_name, team_id, position) VALUES ('54469', '81', 'Adam', 'Smith', 'Smith', '91', 'Defender');
+INSERT INTO players (player_code, player_id, first_name, second_name, web_name, team_id, position) VALUES ('201658', '83', 'Marcus', 'Tavernier', 'Tavernier', '91', 'Midfielder');
+INSERT INTO players (player_code, player_id, first_name, second_name, web_name, team_id, position) VALUES ('229600', '84', 'Mark', 'Travers', 'Travers', '91', 'Goalkeeper');
+INSERT INTO players (player_code, player_id, first_name, second_name, web_name, team_id, position) VALUES ('477580', '85', 'Illia', 'Zabarnyi', 'Zabarnyi', '91', 'Defender');
+INSERT INTO players (player_code, player_id, first_name, second_name, web_name, team_id, position) VALUES ('109745', '152', 'Kepa', 'Arrizabalaga', 'Arrizabalaga', '91', 'Goalkeeper');
 INSERT INTO players (player_code, player_id, first_name, second_name, web_name, team_id, position) VALUES ('205651', '2', 'Gabriel', 'Fernando de Jesus', 'G.Jesus', '3', 'Forward');
 INSERT INTO players (player_code, player_id, first_name, second_name, web_name, team_id, position) VALUES ('226597', '3', 'Gabriel', 'dos Santos Magalhães', 'Gabriel', '3', 'Defender');
 INSERT INTO players (player_code, player_id, first_name, second_name, web_name, team_id, position) VALUES ('219847', '4', 'Kai', 'Havertz', 'Havertz', '3', 'Forward');
@@ -103,25 +107,19 @@ INSERT INTO players (player_code, player_id, first_name, second_name, web_name, 
 INSERT INTO players (player_code, player_id, first_name, second_name, web_name, team_id, position) VALUES ('476344', '38', 'Jhon', 'Durán', 'Duran', '7', 'Forward');
 INSERT INTO players (player_code, player_id, first_name, second_name, web_name, team_id, position) VALUES ('462492', '39', 'Joe', 'Gauci', 'Gauci', '7', 'Goalkeeper');
 INSERT INTO players (player_code, player_id, first_name, second_name, web_name, team_id, position) VALUES ('155408', '64', 'Lewis', 'Cook', 'Cook', '91', 'Midfielder');
-INSERT INTO players (player_code, player_id, first_name, second_name, web_name, team_id, position) VALUES ('224995', '80', 'Luis', 'Sinisterra', 'Sinisterra', '91', 'Midfielder');
-INSERT INTO players (player_code, player_id, first_name, second_name, web_name, team_id, position) VALUES ('54469', '81', 'Adam', 'Smith', 'Smith', '91', 'Defender');
-INSERT INTO players (player_code, player_id, first_name, second_name, web_name, team_id, position) VALUES ('201658', '83', 'Marcus', 'Tavernier', 'Tavernier', '91', 'Midfielder');
-INSERT INTO players (player_code, player_id, first_name, second_name, web_name, team_id, position) VALUES ('229600', '84', 'Mark', 'Travers', 'Travers', '91', 'Goalkeeper');
-INSERT INTO players (player_code, player_id, first_name, second_name, web_name, team_id, position) VALUES ('477580', '85', 'Illia', 'Zabarnyi', 'Zabarnyi', '91', 'Defender');
-INSERT INTO players (player_code, player_id, first_name, second_name, web_name, team_id, position) VALUES ('109745', '152', 'Kepa', 'Arrizabalaga', 'Arrizabalaga', '91', 'Goalkeeper');
 INSERT INTO players (player_code, player_id, first_name, second_name, web_name, team_id, position) VALUES ('436893', '592', 'Julián', 'Araujo Zúñiga', 'J.Araujo', '91', 'Defender');
 INSERT INTO players (player_code, player_id, first_name, second_name, web_name, team_id, position) VALUES ('444172', '599', 'Will', 'Dennis', 'Dennis', '91', 'Goalkeeper');
 INSERT INTO players (player_code, player_id, first_name, second_name, web_name, team_id, position) VALUES ('444102', '617', 'Francisco Evanilson', 'de Lima Barbosa', 'Evanilson', '91', 'Forward');
 INSERT INTO players (player_code, player_id, first_name, second_name, web_name, team_id, position) VALUES ('496683', '680', 'Max', 'Kinsey', 'Kinsey', '91', 'Defender');
-INSERT INTO players (player_code, player_id, first_name, second_name, web_name, team_id, position) VALUES ('166989', '57', 'Youri', 'Tielemans', 'Tielemans', '7', 'Midfielder');
-INSERT INTO players (player_code, player_id, first_name, second_name, web_name, team_id, position) VALUES ('544877', '70', 'Milos', 'Kerkez', 'Kerkez', '91', 'Defender');
-INSERT INTO players (player_code, player_id, first_name, second_name, web_name, team_id, position) VALUES ('554605', '580', 'Dean', 'Huijsen', 'Huijsen', '91', 'Defender');
 INSERT INTO players (player_code, player_id, first_name, second_name, web_name, team_id, position) VALUES ('606775', '687', 'Ben', 'Winterburn', 'Winterburn', '91', 'Midfielder');
 INSERT INTO players (player_code, player_id, first_name, second_name, web_name, team_id, position) VALUES ('632822', '702', 'Archie', 'Harris', 'Harris', '91', 'Defender');
 INSERT INTO players (player_code, player_id, first_name, second_name, web_name, team_id, position) VALUES ('606774', '707', 'Remy', 'Rees-Dottin', 'Rees-Dottin', '91', 'Forward');
 INSERT INTO players (player_code, player_id, first_name, second_name, web_name, team_id, position) VALUES ('191866', '86', 'Kristoffer', 'Ajer', 'Ajer', '94', 'Defender');
 INSERT INTO players (player_code, player_id, first_name, second_name, web_name, team_id, position) VALUES ('494041', '87', 'Ethan', 'Brierley', 'Brierley', '94', 'Midfielder');
 INSERT INTO players (player_code, player_id, first_name, second_name, web_name, team_id, position) VALUES ('432830', '88', 'Nathan', 'Collins', 'Collins', '94', 'Defender');
+INSERT INTO players (player_code, player_id, first_name, second_name, web_name, team_id, position) VALUES ('166989', '57', 'Youri', 'Tielemans', 'Tielemans', '7', 'Midfielder');
+INSERT INTO players (player_code, player_id, first_name, second_name, web_name, team_id, position) VALUES ('544877', '70', 'Milos', 'Kerkez', 'Kerkez', '91', 'Defender');
+INSERT INTO players (player_code, player_id, first_name, second_name, web_name, team_id, position) VALUES ('554605', '580', 'Dean', 'Huijsen', 'Huijsen', '91', 'Defender');
 INSERT INTO players (player_code, player_id, first_name, second_name, web_name, team_id, position) VALUES ('440089', '89', 'Mikkel', 'Damsgaard', 'Damsgaard', '94', 'Midfielder');
 INSERT INTO players (player_code, player_id, first_name, second_name, web_name, team_id, position) VALUES ('183656', '90', 'Josh', 'Dasilva', 'Dasilva', '94', 'Midfielder');
 INSERT INTO players (player_code, player_id, first_name, second_name, web_name, team_id, position) VALUES ('118342', '91', 'Mark', 'Flekken', 'Flekken', '94', 'Goalkeeper');
@@ -314,14 +312,15 @@ INSERT INTO players (player_code, player_id, first_name, second_name, web_name, 
 INSERT INTO players (player_code, player_id, first_name, second_name, web_name, team_id, position) VALUES ('232892', '241', 'Calvin', 'Bassey', 'Bassey', '54', 'Defender');
 INSERT INTO players (player_code, player_id, first_name, second_name, web_name, team_id, position) VALUES ('428971', '242', 'Steven', 'Benda', 'Benda', '54', 'Goalkeeper');
 INSERT INTO players (player_code, player_id, first_name, second_name, web_name, team_id, position) VALUES ('76357', '243', 'Tom', 'Cairney', 'Cairney', '54', 'Midfielder');
-INSERT INTO players (player_code, player_id, first_name, second_name, web_name, team_id, position) VALUES ('547801', '678', 'Callum', 'Bates', 'Bates', '11', 'Midfielder');
-INSERT INTO players (player_code, player_id, first_name, second_name, web_name, team_id, position) VALUES ('174874', '191', 'Joachim', 'Andersen', 'Andersen', '54', 'Defender');
 INSERT INTO players (player_code, player_id, first_name, second_name, web_name, team_id, position) VALUES ('166477', '244', 'Timothy', 'Castagne', 'Castagne', '54', 'Defender');
+INSERT INTO players (player_code, player_id, first_name, second_name, web_name, team_id, position) VALUES ('219924', '245', 'Issa', 'Diop', 'Diop', '54', 'Defender');
 INSERT INTO players (player_code, player_id, first_name, second_name, web_name, team_id, position) VALUES ('515024', '246', 'Luke', 'Harris', 'Harris', '54', 'Midfielder');
 INSERT INTO players (player_code, player_id, first_name, second_name, web_name, team_id, position) VALUES ('153133', '247', 'Alex', 'Iwobi', 'Iwobi', '54', 'Midfielder');
 INSERT INTO players (player_code, player_id, first_name, second_name, web_name, team_id, position) VALUES ('80201', '248', 'Bernd', 'Leno', 'Leno', '54', 'Goalkeeper');
 INSERT INTO players (player_code, player_id, first_name, second_name, web_name, team_id, position) VALUES ('212314', '249', 'Saša', 'Lukić', 'Lukić', '54', 'Midfielder');
 INSERT INTO players (player_code, player_id, first_name, second_name, web_name, team_id, position) VALUES ('120721', '250', 'Kevin', 'Mbabu', 'Mbabu', '54', 'Defender');
+INSERT INTO players (player_code, player_id, first_name, second_name, web_name, team_id, position) VALUES ('547801', '678', 'Callum', 'Bates', 'Bates', '11', 'Midfielder');
+INSERT INTO players (player_code, player_id, first_name, second_name, web_name, team_id, position) VALUES ('174874', '191', 'Joachim', 'Andersen', 'Andersen', '54', 'Defender');
 INSERT INTO players (player_code, player_id, first_name, second_name, web_name, team_id, position) VALUES ('244042', '251', 'Rodrigo', 'Muniz Carvalho', 'Muniz', '54', 'Forward');
 INSERT INTO players (player_code, player_id, first_name, second_name, web_name, team_id, position) VALUES ('102057', '252', 'Raúl', 'Jiménez', 'Raúl', '54', 'Forward');
 INSERT INTO players (player_code, player_id, first_name, second_name, web_name, team_id, position) VALUES ('82514', '253', 'Tim', 'Ream', 'Ream', '54', 'Defender');
@@ -416,13 +415,13 @@ INSERT INTO players (player_code, player_id, first_name, second_name, web_name, 
 INSERT INTO players (player_code, player_id, first_name, second_name, web_name, team_id, position) VALUES ('158983', '320', 'Endo', 'Wataru', 'Endo', '14', 'Midfielder');
 INSERT INTO players (player_code, player_id, first_name, second_name, web_name, team_id, position) VALUES ('243298', '321', 'Cody', 'Gakpo', 'Gakpo', '14', 'Forward');
 INSERT INTO players (player_code, player_id, first_name, second_name, web_name, team_id, position) VALUES ('171287', '322', 'Joe', 'Gomez', 'Gomez', '14', 'Defender');
-INSERT INTO players (player_code, player_id, first_name, second_name, web_name, team_id, position) VALUES ('496208', '318', 'Ben', 'Doak', 'Doak', '14', 'Midfielder');
 INSERT INTO players (player_code, player_id, first_name, second_name, web_name, team_id, position) VALUES ('441266', '323', 'Ryan', 'Gravenberch', 'Gravenberch', '14', 'Midfielder');
 INSERT INTO players (player_code, player_id, first_name, second_name, web_name, team_id, position) VALUES ('206915', '324', 'Curtis', 'Jones', 'Jones', '14', 'Midfielder');
 INSERT INTO players (player_code, player_id, first_name, second_name, web_name, team_id, position) VALUES ('200720', '325', 'Caoimhin', 'Kelleher', 'Kelleher', '14', 'Goalkeeper');
 INSERT INTO players (player_code, player_id, first_name, second_name, web_name, team_id, position) VALUES ('204716', '326', 'Ibrahima', 'Konaté', 'Konaté', '14', 'Defender');
 INSERT INTO players (player_code, player_id, first_name, second_name, web_name, team_id, position) VALUES ('244731', '327', 'Luis', 'Díaz', 'Luis Díaz', '14', 'Midfielder');
 INSERT INTO players (player_code, player_id, first_name, second_name, web_name, team_id, position) VALUES ('118748', '328', 'Mohamed', 'Salah', 'M.Salah', '14', 'Midfielder');
+INSERT INTO players (player_code, player_id, first_name, second_name, web_name, team_id, position) VALUES ('496208', '318', 'Ben', 'Doak', 'Doak', '14', 'Midfielder');
 INSERT INTO players (player_code, player_id, first_name, second_name, web_name, team_id, position) VALUES ('243016', '329', 'Alexis', 'Mac Allister', 'Mac Allister', '14', 'Midfielder');
 INSERT INTO players (player_code, player_id, first_name, second_name, web_name, team_id, position) VALUES ('491501', '330', 'James', 'McConnell', 'McConnell', '14', 'Midfielder');
 INSERT INTO players (player_code, player_id, first_name, second_name, web_name, team_id, position) VALUES ('440148', '331', 'Tyler', 'Morton', 'Morton', '14', 'Midfielder');
@@ -517,13 +516,13 @@ INSERT INTO players (player_code, player_id, first_name, second_name, web_name, 
 INSERT INTO players (player_code, player_id, first_name, second_name, web_name, team_id, position) VALUES ('487838', '399', 'Lewis', 'Hall', 'Hall', '4', 'Defender');
 INSERT INTO players (player_code, player_id, first_name, second_name, web_name, team_id, position) VALUES ('153127', '400', 'Isaac', 'Hayden', 'Hayden', '4', 'Midfielder');
 INSERT INTO players (player_code, player_id, first_name, second_name, web_name, team_id, position) VALUES ('219168', '401', 'Alexander', 'Isak', 'Isak', '4', 'Forward');
-INSERT INTO players (player_code, player_id, first_name, second_name, web_name, team_id, position) VALUES ('114243', '402', 'Jacob', 'Murphy', 'J.Murphy', '4', 'Midfielder');
 INSERT INTO players (player_code, player_id, first_name, second_name, web_name, team_id, position) VALUES ('180974', '403', 'Joelinton Cássio', 'Apolinário de Lira', 'Joelinton', '4', 'Midfielder');
 INSERT INTO players (player_code, player_id, first_name, second_name, web_name, team_id, position) VALUES ('235530', '404', 'Lloyd', 'Kelly', 'Kelly', '4', 'Defender');
 INSERT INTO players (player_code, player_id, first_name, second_name, web_name, team_id, position) VALUES ('111773', '405', 'Emil', 'Krafth', 'Krafth', '4', 'Defender');
 INSERT INTO players (player_code, player_id, first_name, second_name, web_name, team_id, position) VALUES ('564510', '406', 'Garang', 'Kuol', 'Kuol', '4', 'Midfielder');
 INSERT INTO players (player_code, player_id, first_name, second_name, web_name, team_id, position) VALUES ('101148', '407', 'Jamaal', 'Lascelles', 'Lascelles', '4', 'Defender');
 INSERT INTO players (player_code, player_id, first_name, second_name, web_name, team_id, position) VALUES ('194799', '408', 'Jamal', 'Lewis', 'Lewis', '4', 'Defender');
+INSERT INTO players (player_code, player_id, first_name, second_name, web_name, team_id, position) VALUES ('114243', '402', 'Jacob', 'Murphy', 'J.Murphy', '4', 'Midfielder');
 INSERT INTO players (player_code, player_id, first_name, second_name, web_name, team_id, position) VALUES ('441191', '409', 'Tino', 'Livramento', 'Livramento', '4', 'Defender');
 INSERT INTO players (player_code, player_id, first_name, second_name, web_name, team_id, position) VALUES ('180135', '410', 'Sean', 'Longstaff', 'Longstaff', '4', 'Midfielder');
 INSERT INTO players (player_code, player_id, first_name, second_name, web_name, team_id, position) VALUES ('547719', '411', 'Lewis', 'Miley', 'Miley', '4', 'Midfielder');
@@ -619,6 +618,11 @@ INSERT INTO players (player_code, player_id, first_name, second_name, web_name, 
 INSERT INTO players (player_code, player_id, first_name, second_name, web_name, team_id, position) VALUES ('164555', '516', 'Vladimír', 'Coufal', 'Coufal', '21', 'Defender');
 INSERT INTO players (player_code, player_id, first_name, second_name, web_name, team_id, position) VALUES ('55459', '517', 'Aaron', 'Cresswell', 'Cresswell', '21', 'Defender');
 INSERT INTO players (player_code, player_id, first_name, second_name, web_name, team_id, position) VALUES ('490885', '519', 'George', 'Earthy', 'Earthy', '21', 'Midfielder');
+INSERT INTO players (player_code, player_id, first_name, second_name, web_name, team_id, position) VALUES ('84939', '523', 'Danny', 'Ings', 'Ings', '21', 'Forward');
+INSERT INTO players (player_code, player_id, first_name, second_name, web_name, team_id, position) VALUES ('214048', '524', 'Max', 'Kilman', 'Kilman', '21', 'Defender');
+INSERT INTO players (player_code, player_id, first_name, second_name, web_name, team_id, position) VALUES ('460842', '525', 'Mohammed', 'Kudus', 'Kudus', '21', 'Midfielder');
+INSERT INTO players (player_code, player_id, first_name, second_name, web_name, team_id, position) VALUES ('577114', '526', 'Luis Guilherme', 'Lira dos Santos', 'L.Guilherme', '21', 'Midfielder');
+INSERT INTO players (player_code, player_id, first_name, second_name, web_name, team_id, position) VALUES ('224024', '527', 'Lucas', 'Tolentino Coelho de Lima', 'L.Paquetá', '21', 'Midfielder');
 INSERT INTO players (player_code, player_id, first_name, second_name, web_name, team_id, position) VALUES ('103914', '475', 'Charlie', 'Taylor', 'Taylor', '20', 'Defender');
 INSERT INTO players (player_code, player_id, first_name, second_name, web_name, team_id, position) VALUES ('158534', '476', 'Kyle', 'Walker-Peters', 'Walker-Peters', '20', 'Defender');
 INSERT INTO players (player_code, player_id, first_name, second_name, web_name, team_id, position) VALUES ('244845', '477', 'Nathan', 'Wood-Gordon', 'Wood', '20', 'Defender');
@@ -663,10 +667,6 @@ INSERT INTO players (player_code, player_id, first_name, second_name, web_name, 
 INSERT INTO players (player_code, player_id, first_name, second_name, web_name, team_id, position) VALUES ('109533', '520', 'Emerson', 'Palmieri dos Santos', 'Emerson', '21', 'Defender');
 INSERT INTO players (player_code, player_id, first_name, second_name, web_name, team_id, position) VALUES ('37096', '521', 'Łukasz', 'Fabiański', 'Fabianski', '21', 'Goalkeeper');
 INSERT INTO players (player_code, player_id, first_name, second_name, web_name, team_id, position) VALUES ('82143', '522', 'Wes', 'Foderingham', 'Foderingham', '21', 'Goalkeeper');
-INSERT INTO players (player_code, player_id, first_name, second_name, web_name, team_id, position) VALUES ('214048', '524', 'Max', 'Kilman', 'Kilman', '21', 'Defender');
-INSERT INTO players (player_code, player_id, first_name, second_name, web_name, team_id, position) VALUES ('460842', '525', 'Mohammed', 'Kudus', 'Kudus', '21', 'Midfielder');
-INSERT INTO players (player_code, player_id, first_name, second_name, web_name, team_id, position) VALUES ('577114', '526', 'Luis Guilherme', 'Lira dos Santos', 'L.Guilherme', '21', 'Midfielder');
-INSERT INTO players (player_code, player_id, first_name, second_name, web_name, team_id, position) VALUES ('224024', '527', 'Lucas', 'Tolentino Coelho de Lima', 'L.Paquetá', '21', 'Midfielder');
 INSERT INTO players (player_code, player_id, first_name, second_name, web_name, team_id, position) VALUES ('233963', '528', 'Konstantinos', 'Mavropanos', 'Mavropanos', '21', 'Defender');
 INSERT INTO players (player_code, player_id, first_name, second_name, web_name, team_id, position) VALUES ('210494', '529', 'Nayef', 'Aguerd', 'N.Aguerd', '21', 'Defender');
 INSERT INTO players (player_code, player_id, first_name, second_name, web_name, team_id, position) VALUES ('215439', '530', 'Tomáš', 'Souček', 'Souček', '21', 'Midfielder');
