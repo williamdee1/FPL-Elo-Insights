@@ -16,6 +16,7 @@ def split_matches_by_gameweek(season_path):
     
     # Read matches data
     matches_df = pd.read_csv(matches_path)
+    print(f"Found {len(matches_df)} matches")
     
     # Create gameweek directory
     gw_base_path = os.path.join(season_path, 'matches', 'gameweeks')
@@ -27,6 +28,7 @@ def split_matches_by_gameweek(season_path):
         
         gw_matches = matches_df[matches_df['gameweek'] == gw]
         gw_matches.to_csv(os.path.join(gw_path, 'matches.csv'), index=False)
+        print(f"Created GW{gw} with {len(gw_matches)} matches")
         
     return matches_df
 
@@ -39,6 +41,7 @@ def split_player_match_stats(season_path, matches_df):
     
     # Read player match stats
     stats_df = pd.read_csv(stats_path)
+    print(f"Found {len(stats_df)} player match stats")
     
     # Create base directory
     gw_base_path = os.path.join(season_path, 'playermatchstats', 'gameweeks')
@@ -52,6 +55,7 @@ def split_player_match_stats(season_path, matches_df):
     # Split and save by gameweek
     for gw in stats_df['gameweek'].unique():
         if pd.isna(gw):
+            print(f"Skipping records with missing gameweek")
             continue
             
         gw_path = os.path.join(gw_base_path, f'GW{int(gw)}')
@@ -59,6 +63,7 @@ def split_player_match_stats(season_path, matches_df):
         
         gw_stats = stats_df[stats_df['gameweek'] == gw]
         gw_stats.to_csv(os.path.join(gw_path, 'playermatchstats.csv'), index=False)
+        print(f"Created GW{int(gw)} with {len(gw_stats)} player stats")
         
         # Further split by match_id within gameweek
         for match_id in gw_stats['match_id'].unique():
@@ -67,6 +72,7 @@ def split_player_match_stats(season_path, matches_df):
             
             match_stats = gw_stats[gw_stats['match_id'] == match_id]
             match_stats.to_csv(os.path.join(match_path, 'playermatchstats.csv'), index=False)
+            print(f"  - Match {match_id}: {len(match_stats)} player stats")
 
 def split_player_stats(season_path):
     """Split playerstats.csv by gameweek"""
@@ -77,6 +83,7 @@ def split_player_stats(season_path):
     
     # Read player stats
     stats_df = pd.read_csv(stats_path)
+    print(f"Found {len(stats_df)} player stats")
     
     # Create gameweek directory
     gw_base_path = os.path.join(season_path, 'playerstats', 'gameweeks')
@@ -88,28 +95,31 @@ def split_player_stats(season_path):
         
         gw_stats = stats_df[stats_df['gw'] == gw]
         gw_stats.to_csv(os.path.join(gw_path, 'playerstats.csv'), index=False)
+        print(f"Created GW{gw} with {len(gw_stats)} player stats")
 
 def main():
     # Process for current season
     season = "2024-2025"  # Update this as needed
     season_path = os.path.join('data', season)
     
-    print("Starting CSV splitting process...")
+    print(f"Starting CSV splitting process...")
+    print(f"Current working directory: {os.getcwd()}")
+    print(f"Looking for data in: {season_path}")
     
     # Split matches and get DataFrame for reference
-    print("Splitting matches by gameweek...")
+    print("\nSplitting matches by gameweek...")
     matches_df = split_matches_by_gameweek(season_path)
     
     if matches_df is not None:
         # Split player match stats using matches reference
-        print("Splitting player match stats by gameweek and match_id...")
+        print("\nSplitting player match stats by gameweek and match_id...")
         split_player_match_stats(season_path, matches_df)
     
     # Split player stats
-    print("Splitting player stats by gameweek...")
+    print("\nSplitting player stats by gameweek...")
     split_player_stats(season_path)
     
-    print("CSV splitting process completed!")
+    print("\nCSV splitting process completed!")
 
 if __name__ == "__main__":
     main()
