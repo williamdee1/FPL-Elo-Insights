@@ -11,12 +11,36 @@ key: str = os.environ.get("SUPABASE_KEY")
 
 supabase: Client = create_client(url, key)
 
+def fetch_all_records(table_name: str) -> list:
+    """Fetches all records from a table using pagination."""
+    all_data = []
+    page_size = 1000
+    start = 0
+    
+    while True:
+        response = (supabase.table(table_name)
+                   .select("*")
+                   .range(start, start + page_size - 1)
+                   .execute())
+        
+        page_data = response.data
+        if not page_data:
+            break
+            
+        all_data.extend(page_data)
+        
+        if len(page_data) < page_size:
+            break
+            
+        start += page_size
+        
+    return all_data
+
 def export_table(table_name: str, season: str):
     """Exports a Supabase table to both CSV and SQL formats."""
     try:
-        # Fetch data once for both exports
-        response = supabase.table(table_name).select("*").execute()
-        data = response.data
+        # Fetch all data using pagination
+        data = fetch_all_records(table_name)
         
         if not data:
             print(f"No data found in table {table_name}")
@@ -39,7 +63,8 @@ def export_table(table_name: str, season: str):
             # Add timestamp comment
             timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
             sqlfile.write(f"-- Data export from {table_name}\n")
-            sqlfile.write(f"-- Generated on {timestamp}\n\n")
+            sqlfile.write(f"-- Generated on {timestamp}\n")
+            sqlfile.write(f"-- Total records: {len(data)}\n\n")
             
             # Write DROP and CREATE TABLE statements
             sqlfile.write(f"DROP TABLE IF EXISTS {table_name};\n")
@@ -49,14 +74,17 @@ def export_table(table_name: str, season: str):
             create_table += "\n);\n\n"
             sqlfile.write(create_table)
             
-            # Write INSERT statements
-            for row in data:
-                values = [str(val).replace("'", "''") if val is not None else 'NULL' for val in row.values()]
-                values_str = ", ".join(f"'{val}'" if val != 'NULL' else val for val in values)
-                insert_stmt = f"INSERT INTO {table_name} ({', '.join(columns)}) VALUES ({values_str});\n"
-                sqlfile.write(insert_stmt)
+            # Write INSERT statements in batches
+            batch_size = 500
+            for i in range(0, len(data), batch_size):
+                batch = data[i:i + batch_size]
+                for row in batch:
+                    values = [str(val).replace("'", "''") if val is not None else 'NULL' for val in row.values()]
+                    values_str = ", ".join(f"'{val}'" if val != 'NULL' else val for val in values)
+                    insert_stmt = f"INSERT INTO {table_name} ({', '.join(columns)}) VALUES ({values_str});\n"
+                    sqlfile.write(insert_stmt)
                 
-        print(f"Successfully exported {table_name} to CSV and SQL in {output_dir}")
+        print(f"Successfully exported {table_name} to CSV and SQL in {output_dir} (Total records: {len(data)})")
 
     except Exception as e:
         print(f"Error exporting {table_name}: {e}")
