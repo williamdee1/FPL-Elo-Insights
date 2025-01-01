@@ -1,5 +1,5 @@
 -- Data export from playermatchstats
--- Generated on 2024-12-31 17:01:40
+-- Generated on 2025-01-01 05:07:26
 
 DROP TABLE IF EXISTS playermatchstats;
 CREATE TABLE playermatchstats (
