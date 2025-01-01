@@ -24,7 +24,7 @@ jobs:
           pip install pandas numpy
           
       - name: Split CSV files
-        run: python .github/scripts/split_csv_data.py
+        run: python scripts/split_csv_data.py
         
       - name: Commit changes
         run: |
