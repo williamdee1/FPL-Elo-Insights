@@ -1,5 +1,6 @@
 -- Data export from matches
--- Generated on 2025-01-01 05:07:25
+-- Generated on 2025-01-01 14:09:48
+-- Total records: 380
 
 DROP TABLE IF EXISTS matches;
 CREATE TABLE matches (
