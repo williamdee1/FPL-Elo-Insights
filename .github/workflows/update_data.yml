@@ -23,7 +23,7 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install pandas numpy supabase-py python-dotenv
+          pip install pandas numpy supabase python-dotenv
           
       - name: Process FPL data
         env:
