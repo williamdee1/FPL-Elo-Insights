@@ -82,26 +82,27 @@ def update_player_match_stats(season_path, matches_df, latest_finished_gameweek)
             continue
 
         gw_int = int(gw)
+        gw_path = os.path.join(gw_base_path, f'GW{gw_int}')
+        create_directory(gw_path)
+
+        gw_stats = stats_df[stats_df['gameweek'] == gw]
+
+        # Check if gameweek exists
+        existing_gw_stats_path = os.path.join(gw_path, 'playermatchstats.csv')
+        if os.path.exists(existing_gw_stats_path):
+            existing_gw_stats_df = pd.read_csv(existing_gw_stats_path)
+            # Ensure consistent columns before merging
+            for col in gw_stats.columns:
+                if col not in existing_gw_stats_df.columns:
+                    existing_gw_stats_df[col] = None
+            for col in existing_gw_stats_df.columns:
+                if col not in gw_stats.columns:
+                    gw_stats[col] = None
+        else:
+            existing_gw_stats_df = pd.DataFrame(columns=gw_stats.columns)
+
+        # Skip only if gw is before latest_finished_gameweek AND no new data needs to be added
         if gw_int >= latest_finished_gameweek:
-            gw_path = os.path.join(gw_base_path, f'GW{gw_int}')
-            create_directory(gw_path)
-
-            gw_stats = stats_df[stats_df['gameweek'] == gw]
-
-            # Check if gameweek exists
-            existing_gw_stats_path = os.path.join(gw_path, 'playermatchstats.csv')
-            if os.path.exists(existing_gw_stats_path):
-                existing_gw_stats_df = pd.read_csv(existing_gw_stats_path)
-                # Ensure consistent columns before merging
-                for col in gw_stats.columns:
-                    if col not in existing_gw_stats_df.columns:
-                        existing_gw_stats_df[col] = None
-                for col in existing_gw_stats_df.columns:
-                    if col not in gw_stats.columns:
-                        gw_stats[col] = None
-            else:
-                existing_gw_stats_df = pd.DataFrame(columns=gw_stats.columns)
-
             # Merge and update
             updated_gw_stats = pd.concat([existing_gw_stats_df, gw_stats]).drop_duplicates(subset=['player_id', 'match_id'], keep='last')
             updated_gw_stats.to_csv(existing_gw_stats_path, index=False)
@@ -149,33 +150,38 @@ def update_player_stats(season_path, latest_finished_gameweek):
 
     # Update or add data by gameweek
     for gw in stats_df['gw'].unique():
-        if gw >= latest_finished_gameweek:
-            gw_path = os.path.join(gw_base_path, f'GW{gw}')
-            create_directory(gw_path)
+        gw_path = os.path.join(gw_base_path, f'GW{gw}')
+        create_directory(gw_path)
 
-            gw_stats = stats_df[stats_df['gw'] == gw]
+        gw_stats = stats_df[stats_df['gw'] == gw]
 
-            existing_gw_stats_path = os.path.join(gw_path, 'playerstats.csv')
-            if os.path.exists(existing_gw_stats_path):
-                existing_gw_stats_df = pd.read_csv(existing_gw_stats_path)
+        existing_gw_stats_path = os.path.join(gw_path, 'playerstats.csv')
+        if os.path.exists(existing_gw_stats_path):
+            existing_gw_stats_df = pd.read_csv(existing_gw_stats_path)
 
-                # Ensure consistent columns before merging
-                for col in gw_stats.columns:
-                    if col not in existing_gw_stats_df.columns:
-                        existing_gw_stats_df[col] = None
-                for col in existing_gw_stats_df.columns:
-                    if col not in gw_stats.columns:
-                        gw_stats[col] = None
+            # Ensure consistent columns before merging
+            for col in gw_stats.columns:
+                if col not in existing_gw_stats_df.columns:
+                    existing_gw_stats_df[col] = None
+            for col in existing_gw_stats_df.columns:
+                if col not in gw_stats.columns:
+                    gw_stats[col] = None
 
+            # Skip only if gw is before latest_finished_gameweek AND no new data needs to be added
+            if gw >= latest_finished_gameweek:
                 # Merge data, keeping the latest
                 updated_gw_stats = pd.concat([existing_gw_stats_df, gw_stats]).drop_duplicates(subset=['player_id', 'gw'], keep='last')
                 updated_gw_stats.to_csv(existing_gw_stats_path, index=False)
                 print(f"Updated GW{gw} with {len(updated_gw_stats)} player stats")
             else:
+                print(f"Skipping GW{gw} (before latest finished gameweek).")
+        else:
+            # Only create if it's a new gameweek that should be processed
+            if gw >= latest_finished_gameweek:
                 gw_stats.to_csv(os.path.join(gw_path, 'playerstats.csv'), index=False)
                 print(f"Created GW{gw} with {len(gw_stats)} player stats")
-        else:
-            print(f"Skipping GW{gw} (before latest finished gameweek).")
+            else:
+                print(f"Skipping GW{gw} (before latest finished gameweek).")
 
 def main():
     season = "2024-2025"
