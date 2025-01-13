@@ -170,7 +170,7 @@ def update_player_stats(season_path, latest_finished_gameweek):
             # Skip only if gw is before latest_finished_gameweek AND no new data needs to be added
             if gw >= latest_finished_gameweek:
                 # Merge data, keeping the latest
-                updated_gw_stats = pd.concat([existing_gw_stats_df, gw_stats]).drop_duplicates(subset=['player_id', 'gw'], keep='last')
+                updated_gw_stats = pd.concat([existing_gw_stats_df, gw_stats]).drop_duplicates(subset=['id', 'gw'], keep='last')
                 updated_gw_stats.to_csv(existing_gw_stats_path, index=False)
                 print(f"Updated GW{gw} with {len(updated_gw_stats)} player stats")
             else:
