@@ -1,5 +1,5 @@
 -- Data export from players
--- Generated on 2025-02-03 05:05:49
+-- Generated on 2025-02-03 17:01:06
 -- Total records: 761
 
 DROP TABLE IF EXISTS players;
