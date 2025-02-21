@@ -1,5 +1,5 @@
 -- Data export from teams
--- Generated on 2025-02-20 17:01:04
+-- Generated on 2025-02-21 05:05:57
 -- Total records: 20
 
 DROP TABLE IF EXISTS teams;
