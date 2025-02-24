@@ -254,20 +254,6 @@ This table contains information about each team from the FPL API:
 *   `id` links to `home_team` and `away_team` in the `matches` table.
 *   `id` also links to `team_id` in the `players` table.
 
-## Known Issues
-
-*   **Incomplete Match Data:** The `matches` table currently has some missing data in the following columns:
-    *   `home_team_difficulty`
-    *   `away_team_difficulty`
-    *   `home_penalties_missed`
-    *   `away_penalties_missed`
-    *   `home_penalties_saved`
-    *   `away_penalties_saved`
-    *   `home_own_goals`
-    *   `away_own_goals`
-    *   `home_bonus_points`
-    *   `away_bonus_points`
-
 ## Contributing
 
 Contributions to this project are welcome! If you have suggestions for improvements, additional data sources, or want to help fill in the missing data, please feel free to open an issue 
