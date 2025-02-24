@@ -1,126 +1,120 @@
 import os
 import pandas as pd
-import numpy as np
 from pathlib import Path
 
+# Utility function to create directories
 def create_directory(path):
-    """Create directory if it doesn't exist"""
     Path(path).mkdir(parents=True, exist_ok=True)
 
-def update_matches_by_gameweek(season_path):
-    """Updates matches.csv by gameweek for all gameweeks."""
+# Function to determine the latest finished gameweek (for logging only)
+def get_latest_finished_gameweek(season_path):
+    """
+    Determines the latest gameweek with at least one finished match.
+    This is kept for informational purposes but not used for filtering.
+    """
     matches_path = os.path.join(season_path, 'matches', 'matches.csv')
-    if not os.path.exists(matches_path):
-        print(f"Matches file not found at {matches_path}")
-        return None
-
     matches_df = pd.read_csv(matches_path)
-    print(f"Found {len(matches_df)} matches")
+    # Assuming there's a 'finished' column indicating match status
+    finished_matches = matches_df[matches_df['finished'] == True]
+    if not finished_matches.empty:
+        latest = finished_matches['gameweek'].max()
+    else:
+        latest = 0  # Default if no matches are finished
+    return latest
 
+# Update matches for all gameweeks
+def update_matches_by_gameweek(season_path):
+    """
+    Processes all gameweeks in matches_df and saves matches per gameweek.
+    No skipping based on latest_finished_gameweek.
+    """
+    matches_path = os.path.join(season_path, 'matches', 'matches.csv')
+    matches_df = pd.read_csv(matches_path)
     gw_base_path = os.path.join(season_path, 'matches', 'gameweeks')
+    create_directory(gw_base_path)
 
-    # Split and save by gameweek for all gameweeks
     for gw in matches_df['gameweek'].unique():
         gw_path = os.path.join(gw_base_path, f'GW{gw}')
         create_directory(gw_path)
-
         gw_matches = matches_df[matches_df['gameweek'] == gw]
         gw_matches.to_csv(os.path.join(gw_path, 'matches.csv'), index=False)
         print(f"Updated GW{gw} with {len(gw_matches)} matches")
 
     return matches_df
 
+# Update player match stats for all gameweeks
 def update_player_match_stats(season_path, matches_df):
-    """Updates playermatchstats.csv for all gameweeks."""
+    """
+    Processes all gameweeks in player match stats, mapping match_id to gameweek.
+    No skipping based on latest_finished_gameweek.
+    """
     stats_path = os.path.join(season_path, 'playermatchstats', 'playermatchstats.csv')
-    if not os.path.exists(stats_path):
-        print(f"Player match stats file not found at {stats_path}")
-        return
-
     stats_df = pd.read_csv(stats_path)
-    print(f"Found {len(stats_df)} player match stats")
-
     gw_base_path = os.path.join(season_path, 'playermatchstats', 'gameweeks')
+    create_directory(gw_base_path)
 
-    # Create match_id to gameweek mapping
-    match_to_gw = dict(zip(matches_df['match_id'], matches_df['gameweek']))
+    # Create a mapping from match_id to gameweek using matches_df
+    match_to_gw = matches_df.set_index('match_id')['gameweek'].to_dict()
     stats_df['gameweek'] = stats_df['match_id'].map(match_to_gw)
 
-    # Update or add data by gameweek and match_id for all gameweeks
+    # Handle any unmapped gameweeks (e.g., missing matches)
+    if stats_df['gameweek'].isna().any():
+        print(f"Warning: {stats_df['gameweek'].isna().sum()} player stats have no matching gameweek.")
+
+    total_stats = len(stats_df)
+    print(f"Found {total_stats} player match stats across all gameweeks")
+
     for gw in stats_df['gameweek'].unique():
         if pd.isna(gw):
-            print(f"Skipping records with missing gameweek")
-            continue
-
-        gw_int = int(gw)
-        gw_path = os.path.join(gw_base_path, f'GW{gw_int}')
+            continue  # Skip if gameweek is NaN
+        gw_path = os.path.join(gw_base_path, f'GW{gw}')
         create_directory(gw_path)
-
         gw_stats = stats_df[stats_df['gameweek'] == gw]
+        gw_stats.to_csv(os.path.join(gw_path, 'playermatchstats.csv'), index=False)
+        print(f"Updated GW{gw} with {len(gw_stats)} player match stats")
 
-        # Check if gameweek exists
-        existing_gw_stats_path = os.path.join(gw_path, 'playermatchstats.csv')
-        if os.path.exists(existing_gw_stats_path):
-            existing_gw_stats_df = pd.read_csv(existing_gw_stats_path)
-            # Ensure consistent columns before merging
-            for col in gw_stats.columns:
-                if col not in existing_gw_stats_df.columns:
-                    existing_gw_stats_df[col] = None
-            for col in existing_gw_stats_df.columns:
-                if col not in gw_stats.columns:
-                    gw_stats[col] = None
-        else:
-            existing_gw_stats_df = pd.DataFrame(columns=gw_stats.columns)
+# Update player stats for all gameweeks
+def update_player_stats(season_path):
+    """
+    Processes all gameweeks in player stats.
+    No skipping based on latest_finished_gameweek.
+    """
+    stats_path = os.path.join(season_path, 'playerstats', 'playerstats.csv')
+    stats_df = pd.read_csv(stats_path)
+    gw_base_path = os.path.join(season_path, 'playerstats', 'gameweeks')
+    create_directory(gw_base_path)
 
-        # Merge and update
-        updated_gw_stats = pd.concat([existing_gw_stats_df, gw_stats]).drop_duplicates(subset=['player_id', 'match_id'], keep='last')
-        updated_gw_stats.to_csv(existing_gw_stats_path, index=False)
-        print(f"Updated GW{gw_int} with {len(updated_gw_stats)} player stats")
+    # Assuming stats_df has a 'gameweek' column
+    total_stats = len(stats_df)
+    print(f"Found {total_stats} player stats across all gameweeks")
 
-        for match_id in gw_stats['match_id'].unique():
-            match_id_str = str(match_id)
-            match_path = os.path.join(gw_path, 'matches', match_id_str)
-            create_directory(match_path)
+    for gw in stats_df['gameweek'].unique():
+        gw_path = os.path.join(gw_base_path, f'GW{gw}')
+        create_directory(gw_path)
+        gw_stats = stats_df[stats_df['gameweek'] == gw]
+        gw_stats.to_csv(os.path.join(gw_path, 'playerstats.csv'), index=False)
+        print(f"Updated GW{gw} with {len(gw_stats)} player stats")
 
-            match_stats = gw_stats[gw_stats['match_id'] == match_id]
-            match_stats_path = os.path.join(match_path, 'playermatchstats.csv')
-
-            # Check if match exists
-            if os.path.exists(match_stats_path):
-                existing_match_stats_df = pd.read_csv(match_stats_path)
-                # Ensure consistent columns before merging
-                for col in match_stats.columns:
-                    if col not in existing_match_stats_df.columns:
-                        existing_match_stats_df[col] = None
-                for col in existing_match_stats_df.columns:
-                    if col not in match_stats.columns:
-                        match_stats[col] = None
-            else:
-                existing_match_stats_df = pd.DataFrame(columns=match_stats.columns)
-
-            # Merge and update
-            updated_match_stats = pd.concat([existing_match_stats_df, match_stats]).drop_duplicates(subset=['player_id', 'match_id'], keep='last')
-            updated_match_stats.to_csv(match_stats_path, index=False)
-            print(f"  - Updated Match {match_id_str} in GW{gw_int} with {len(updated_match_stats)} player stats")
-
+# Main execution function
 def main():
     season = "2024-2025"
     season_path = os.path.join('data', season)
 
-    print(f"Starting CSV update process...")
-    print(f"Current working directory: {os.getcwd()}")
-    print(f"Looking for data in: {season_path}")
+    # Calculate latest finished gameweek for logging (optional)
+    latest_finished_gameweek = get_latest_finished_gameweek(season_path)
+    print(f"Latest gameweek with at least one finished match: {latest_finished_gameweek}")
 
-    # Update matches and get DataFrame for reference
+    # Process all gameweeks for matches, player match stats, and player stats
     print("\nUpdating matches by gameweek...")
     matches_df = update_matches_by_gameweek(season_path)
 
-    if matches_df is not None:
-        # Update player match stats using matches reference
-        print("\nUpdating player match stats by gameweek and match_id...")
-        update_player_match_stats(season_path, matches_df)
+    print("\nUpdating player match stats by gameweek...")
+    update_player_match_stats(season_path, matches_df)
 
-    print("\nCSV update process completed!")
+    print("\nUpdating player stats by gameweek...")
+    update_player_stats(season_path)
+
+    print("\nProcessing complete.")
 
 if __name__ == "__main__":
     main()
