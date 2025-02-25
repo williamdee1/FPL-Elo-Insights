@@ -1,5 +1,5 @@
 -- Data export from teams
--- Generated on 2025-02-25 05:06:09
+-- Generated on 2025-02-25 17:01:07
 -- Total records: 20
 
 DROP TABLE IF EXISTS teams;
@@ -30,7 +30,7 @@ INSERT INTO teams (code, id, name, short_name, strength, strength_overall_home, 
 INSERT INTO teams (code, id, name, short_name, strength, strength_overall_home, strength_overall_away, strength_attack_home, strength_attack_away, strength_defence_home, strength_defence_away, pulse_id, elo) VALUES ('54', '9', 'Fulham', 'FUL', '3', '1150', '1150', '1150', '1150', '1150', '1150', '34', '1758');
 INSERT INTO teams (code, id, name, short_name, strength, strength_overall_home, strength_overall_away, strength_attack_home, strength_attack_away, strength_defence_home, strength_defence_away, pulse_id, elo) VALUES ('40', '10', 'Ipswich', 'IPS', '3', '1075', '1075', '1070', '1070', '1080', '1080', '8', '1581');
 INSERT INTO teams (code, id, name, short_name, strength, strength_overall_home, strength_overall_away, strength_attack_home, strength_attack_away, strength_defence_home, strength_defence_away, pulse_id, elo) VALUES ('13', '11', 'Leicester', 'LEI', '3', '1075', '1085', '1060', '1080', '1090', '1090', '26', '1595');
-INSERT INTO teams (code, id, name, short_name, strength, strength_overall_home, strength_overall_away, strength_attack_home, strength_attack_away, strength_defence_home, strength_defence_away, pulse_id, elo) VALUES ('14', '12', 'Liverpool', 'LIV', '5', '1355', '1360', '1340', '1350', '1370', '1370', '10', '2001');
+INSERT INTO teams (code, id, name, short_name, strength, strength_overall_home, strength_overall_away, strength_attack_home, strength_attack_away, strength_defence_home, strength_defence_away, pulse_id, elo) VALUES ('14', '12', 'Liverpool', 'LIV', '5', '1355', '1360', '1340', '1350', '1370', '1370', '10', '2000');
 INSERT INTO teams (code, id, name, short_name, strength, strength_overall_home, strength_overall_away, strength_attack_home, strength_attack_away, strength_defence_home, strength_defence_away, pulse_id, elo) VALUES ('43', '13', 'Man City', 'MCI', '4', '1230', '1250', '1140', '1150', '1320', '1350', '11', '1913');
 INSERT INTO teams (code, id, name, short_name, strength, strength_overall_home, strength_overall_away, strength_attack_home, strength_attack_away, strength_defence_home, strength_defence_away, pulse_id, elo) VALUES ('1', '14', 'Man Utd', 'MUN', '3', '1115', '1140', '1120', '1120', '1110', '1160', '12', '1750');
 INSERT INTO teams (code, id, name, short_name, strength, strength_overall_home, strength_overall_away, strength_attack_home, strength_attack_away, strength_defence_home, strength_defence_away, pulse_id, elo) VALUES ('4', '15', 'Newcastle', 'NEW', '4', '1195', '1225', '1140', '1150', '1250', '1300', '23', '1821');
