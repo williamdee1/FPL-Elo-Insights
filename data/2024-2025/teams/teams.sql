@@ -1,5 +1,5 @@
 -- Data export from teams
--- Generated on 2025-04-10 17:01:14
+-- Generated on 2025-04-11 05:06:38
 -- Total records: 20
 
 DROP TABLE IF EXISTS teams;
@@ -38,4 +38,4 @@ INSERT INTO teams (code, id, name, short_name, strength, strength_overall_home, 
 INSERT INTO teams (code, id, name, short_name, strength, strength_overall_home, strength_overall_away, strength_attack_home, strength_attack_away, strength_defence_home, strength_defence_away, pulse_id, elo) VALUES ('20', '17', 'Southampton', 'SOU', '2', '1055', '1065', '1050', '1050', '1060', '1080', '20', '1548');
 INSERT INTO teams (code, id, name, short_name, strength, strength_overall_home, strength_overall_away, strength_attack_home, strength_attack_away, strength_defence_home, strength_defence_away, pulse_id, elo) VALUES ('6', '18', 'Spurs', 'TOT', '3', '1150', '1185', '1090', '1090', '1210', '1280', '21', '1795');
 INSERT INTO teams (code, id, name, short_name, strength, strength_overall_home, strength_overall_away, strength_attack_home, strength_attack_away, strength_defence_home, strength_defence_away, pulse_id, elo) VALUES ('21', '19', 'West Ham', 'WHU', '3', '1095', '1100', '1080', '1080', '1110', '1120', '25', '1733');
-INSERT INTO teams (code, id, name, short_name, strength, strength_overall_home, strength_overall_away, strength_attack_home, strength_attack_away, strength_defence_home, strength_defence_away, pulse_id, elo) VALUES ('39', '20', 'Wolves', 'WOL', '3', '1095', '1095', '1070', '1070', '1120', '1120', '38', '1713');
+INSERT INTO teams (code, id, name, short_name, strength, strength_overall_home, strength_overall_away, strength_attack_home, strength_attack_away, strength_defence_home, strength_defence_away, pulse_id, elo) VALUES ('39', '20', 'Wolves', 'WOL', '3', '1095', '1095', '1070', '1070', '1120', '1120', '38', '1712');
