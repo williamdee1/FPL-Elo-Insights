@@ -1,3 +1,9 @@
+
+# Season Updates
+# 2025/26 Season - Coming Soon!
+Hey everyone! Just a heads up that the automated updates are currently taking a well-deserved summer break. Once the official FPL API wakes up for the 2025/26 season 
+(usually around July when we all start getting excited about our new fantasy teams!), everything will spring back to life automatically:
+
 # FPL-Elo-Insights: A Comprehensive Dataset for Premier League Analysis
 
 This repository houses a meticulously curated dataset that combines Fantasy Premier League (FPL) data, manually collected match statistics, and historical Elo ratings to provide a powerful resource for in-depth football analysis, particularly for the FPL
