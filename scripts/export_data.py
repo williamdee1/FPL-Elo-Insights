@@ -1,180 +1,199 @@
 import os
-import csv
+import pandas as pd
 from datetime import datetime
 from supabase import create_client, Client
 from dotenv import load_dotenv
+from pathlib import Path
 
-# Load environment variables from .env file
+# --- Setup: Load Environment Variables and Connect to Supabase ---
 load_dotenv()
-
-# --- Supabase Connection ---
 url: str = os.environ.get("SUPABASE_URL")
 key: str = os.environ.get("SUPABASE_KEY")
+
+# Check for credentials before creating a client
+if not url or not key:
+    print("FATAL ERROR: SUPABASE_URL and SUPABASE_KEY must be set in your environment or a .env file.")
+    exit()
+
 supabase: Client = create_client(url, key)
 
-def fetch_all_records(table_name: str) -> list:
-    """Fetches all records from a table using pagination."""
-    all_data = []
-    page_size = 1000
-    start = 0
-    print(f"Fetching all records from '{table_name}'...")
-    while True:
-        try:
-            response = (supabase.table(table_name)
-                       .select("*")
-                       .range(start, start + page_size - 1)
-                       .execute())
-            
-            page_data = response.data
-            if not page_data:
-                break
-                
-            all_data.extend(page_data)
-            
-            if len(page_data) < page_size:
-                break
-                
-            start += page_size
-        except Exception as e:
-            print(f"  ERROR: Could not fetch from {table_name}. Reason: {e}")
-            return [] # Return empty list on error
-            
-    print(f"  > Found {len(all_data)} total records for '{table_name}'.")
-    return all_data
 
-def fetch_filtered_records(table_name: str, column: str, values: list) -> list:
-    """Fetches records from a table filtered by a list of values in a column."""
-    all_data = []
-    page_size = 1000 # Supabase has a limit on how many values can be in an .in() filter
-    
-    # Process values in chunks to avoid hitting database limits
-    for i in range(0, len(values), page_size):
-        chunk_values = values[i:i + page_size]
-        try:
-            response = (supabase.table(table_name)
-                       .select("*")
-                       .in_(column, chunk_values)
-                       .execute())
-            
-            page_data = response.data
-            if page_data:
-                all_data.extend(page_data)
+# --- Helper Functions ---
 
-        except Exception as e:
-            print(f"  ERROR: Could not fetch filtered data from {table_name}. Reason: {e}")
-            continue # Continue to next chunk
-            
-    print(f"  > Found {len(all_data)} filtered records in '{table_name}'.")
-    return all_data
+def create_directory(path: str):
+    """Creates a directory and its parents if it doesn't exist."""
+    Path(path).mkdir(parents=True, exist_ok=True)
 
-def export_data(data: list, table_name: str, output_dir: str):
-    """Exports a list of data to both CSV and SQL formats in the specified directory."""
-    if not data:
-        print(f"Skipping export for '{table_name}' as no data was provided.")
-        return
-
+def get_latest_finished_gameweek() -> int:
+    """Queries the database to find the latest gameweek with at least one finished match."""
+    print("Querying database for the latest finished gameweek...")
     try:
-        # Ensure output directory exists
-        os.makedirs(output_dir, exist_ok=True)
+        # We only need the 'gameweek' column for this, which is efficient
+        response = supabase.table('matches').select('gameweek').eq('finished', True).execute()
         
-        # --- Export to CSV ---
-        csv_file_path = os.path.join(output_dir, f"{table_name}.csv")
-        with open(csv_file_path, 'w', newline='', encoding='utf-8') as csvfile:
-            writer = csv.DictWriter(csvfile, fieldnames=data[0].keys())
-            writer.writeheader()
-            writer.writerows(data)
-            
-        # --- Export to SQL ---
-        sql_file_path = os.path.join(output_dir, f"{table_name}.sql")
-        with open(sql_file_path, 'w', encoding='utf-8') as sqlfile:
-            # Add timestamp and metadata comment
-            timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-            sqlfile.write(f"-- Data export from {table_name}\n")
-            sqlfile.write(f"-- Generated on {timestamp}\n")
-            sqlfile.write(f"-- Total records: {len(data)}\n\n")
-            
-            # Write DROP and CREATE TABLE statements
-            sqlfile.write(f"DROP TABLE IF EXISTS {table_name};\n")
-            columns = data[0].keys()
-            create_table = f"CREATE TABLE {table_name} (\n"
-            create_table += ",\n".join(f"    {col} TEXT" for col in columns)
-            create_table += "\n);\n\n"
-            sqlfile.write(create_table)
-            
-            # Write INSERT statements in batches for efficiency
-            batch_size = 500
-            for i in range(0, len(data), batch_size):
-                batch = data[i:i + batch_size]
-                for row in batch:
-                    # Properly format values for SQL, handling None and single quotes
-                    values = [str(val).replace("'", "''") if val is not None else 'NULL' for val in row.values()]
-                    values_str = ", ".join(f"'{val}'" if val != 'NULL' else val for val in values)
-                    insert_stmt = f"INSERT INTO {table_name} ({', '.join(columns)}) VALUES ({values_str});\n"
-                    sqlfile.write(insert_stmt)
-                
-        print(f"  > Successfully exported '{table_name}' to {output_dir}")
+        if not response.data:
+            print("  > No finished gameweeks found in the database. Starting fresh from Gameweek 1.")
+            return 1
+        
+        # Extract all gameweek numbers and find the maximum
+        finished_gameweeks = [item['gameweek'] for item in response.data if item.get('gameweek') is not None]
+        if not finished_gameweeks:
+            print("  > No valid gameweeks found in finished matches. Starting from Gameweek 1.")
+            return 1
 
+        latest_gw = max(finished_gameweeks)
+        print(f"  > Latest finished gameweek found in database: {latest_gw}")
+        return latest_gw
     except Exception as e:
-        print(f"  ERROR exporting {table_name}: {e}")
-        return
+        print(f"  ERROR: Could not fetch latest gameweek due to an error: {e}. Defaulting to Gameweek 1.")
+        return 1
+
+def fetch_data_since_gameweek(table_name: str, start_gameweek: int, gameweek_col: str = 'gameweek') -> pd.DataFrame:
+    """Fetches all records from a table for a specific gameweek and all future gameweeks."""
+    print(f"Fetching data from '{table_name}' for GW{start_gameweek} onwards...")
+    try:
+        response = supabase.table(table_name).select('*').gte(gameweek_col, start_gameweek).execute()
+        df = pd.DataFrame(response.data)
+        print(f"  > Fetched {len(df)} rows from '{table_name}'.")
+        return df
+    except Exception as e:
+        print(f"  ERROR fetching from '{table_name}': {e}")
+        return pd.DataFrame()
+
+def fetch_data_by_ids(table_name: str, column: str, ids: list) -> pd.DataFrame:
+    """Fetches records where a column value is in a provided list of IDs."""
+    if not ids:
+        return pd.DataFrame()
+        
+    print(f"Fetching {len(ids)} related records from '{table_name}' using '{column}'...")
+    all_data = []
+    # Supabase has a limit on the number of values in an .in() filter, so we process in chunks
+    chunk_size = 500
+    for i in range(0, len(ids), chunk_size):
+        chunk_ids = ids[i:i + chunk_size]
+        try:
+            response = supabase.table(table_name).select('*').in_(column, chunk_ids).execute()
+            all_data.extend(response.data)
+        except Exception as e:
+            print(f"  ERROR fetching chunk from '{table_name}': {e}")
+    
+    df = pd.DataFrame(all_data)
+    print(f"  > Fetched {len(df)} total rows from '{table_name}'.")
+    return df
+
+def update_csv(df: pd.DataFrame, file_path: str, unique_cols: list):
+    """
+    Updates a CSV file with new data. It reads the existing file, appends the new data,
+    and removes duplicates, keeping only the last (newest) entry for each unique record.
+    """
+    # Ensure the directory for the file exists
+    create_directory(os.path.dirname(file_path))
+
+    if os.path.exists(file_path):
+        existing_df = pd.read_csv(file_path)
+        combined_df = pd.concat([existing_df, df])
+    else:
+        combined_df = df
+    
+    # Drop duplicates based on the key identifier columns, keeping the latest entry
+    updated_df = combined_df.drop_duplicates(subset=unique_cols, keep='last')
+    updated_df.to_csv(file_path, index=False)
+
 
 def main():
-    """Main function to export all tables with the new directory structure."""
-    season = "2025-2026"
-    season_dir = os.path.join("data", season)
+    """Main function to run the entire data export and processing pipeline."""
+    season = "2024-2025"
+    season_path = os.path.join('data', season)
+    print(f"--- Starting Automated Data Update for Season {season} ---")
+    print(f"Timestamp: {datetime.now().strftime('%Y-%m-%d %H:%M:%S UTC')}")
 
-    # --- PART 1: EXPORT GLOBAL TABLES ---
-    print("--- Starting export for global season tables ---")
-    global_tables = ["players", "playerstats", "teams"]
-    for table in global_tables:
-        table_data = fetch_all_records(table)
-        if table_data:
-            export_data(table_data, table, season_dir)
-    print("--- Global tables export complete ---\n")
+    # 1. INTELLIGENTLY DETERMINE WHICH GAMEWEEKS TO PROCESS
+    # We find the last gameweek that was marked as 'finished' in the database.
+    # We will re-process this gameweek and all subsequent ones to catch updates.
+    start_gameweek = get_latest_finished_gameweek()
 
-    # --- PART 2: EXPORT TOURNAMENT-SPECIFIC TABLES ---
-    print("--- Starting export for tournament-specific tables ---")
-    
-    # Step A: Discover all tournaments from the 'matches' table
-    all_matches = fetch_all_records("matches")
-    if not all_matches:
-        print("No matches found. Cannot proceed with tournament-specific exports.")
+    # 2. FETCH ONLY THE NECESSARY DATA FROM THE DATABASE
+    matches_df = fetch_data_since_gameweek('matches', start_gameweek)
+    if matches_df.empty:
+        print("\nNo new or updated match data found since last finished gameweek. Process complete.")
         return
 
-    unique_tournaments = set()
-    for match in all_matches:
+    # From the new matches, get IDs to fetch all related data
+    relevant_match_ids = matches_df['match_id'].unique().tolist()
+    player_match_stats_df = fetch_data_by_ids('playermatchstats', 'match_id', relevant_match_ids)
+    
+    # Fetch playerstats for the relevant gameweeks
+    player_stats_df = fetch_data_since_gameweek('playerstats', start_gameweek, gameweek_col='gw')
+
+    # Collect unique IDs to update master files for players and teams
+    all_player_ids = player_match_stats_df['player_id'].unique().tolist()
+    home_team_ids = matches_df['home_team_id'].unique()
+    away_team_ids = matches_df['away_team_id'].unique()
+    all_team_ids = list(set(home_team_ids) | set(away_team_ids))
+
+    players_df = fetch_data_by_ids('players', 'player_id', all_player_ids)
+    teams_df = fetch_data_by_ids('teams', 'team_id', all_team_ids)
+
+    # 3. PROCESS AND SAVE THE FETCHED DATA INTO CSV FILES
+    
+    # --- Process Matches and PlayerMatchStats (Split by GW and Tournament) ---
+    print("\n--- Processing and saving data split by Gameweek and Tournament ---")
+    
+    # Create a mapping of match_id to its tournament for easy lookup
+    match_to_tournament_map = {}
+    for _, row in matches_df.iterrows():
         try:
-            # Assumes match_id format is 'season-tournament-home-vs-away'
-            tournament_name = match['match_id'].split('-')[1]
-            unique_tournaments.add(tournament_name)
-        except (KeyError, IndexError):
-            print(f"  WARNING: Could not parse tournament from match_id: {match.get('match_id', 'N/A')}")
-            continue
+            tournament = row['match_id'].split('-')[2]
+            match_to_tournament_map[row['match_id']] = tournament
+        except IndexError:
+            print(f"  WARNING: Could not parse tournament from match_id: {row.get('match_id', 'N/A')}")
     
-    if not unique_tournaments:
-        print("Could not identify any unique tournaments from match data.")
-        return
-        
-    print(f"Discovered {len(unique_tournaments)} tournaments: {', '.join(unique_tournaments)}")
+    # Process Matches
+    for gw, group in matches_df.groupby('gameweek'):
+        for _, match in group.iterrows():
+            tournament = match_to_tournament_map.get(match['match_id'])
+            if tournament:
+                output_dir = os.path.join(season_path, f"GW{gw}", tournament)
+                file_path = os.path.join(output_dir, "matches.csv")
+                update_csv(pd.DataFrame([match]), file_path, unique_cols=['match_id'])
+    print("  > Finished processing 'matches'.")
 
-    # Step B: Loop through each tournament and export its data
-    for tournament in unique_tournaments:
-        print(f"\n--- Processing tournament: {tournament} ---")
-        tournament_dir = os.path.join(season_dir, tournament)
+    # Process PlayerMatchStats
+    if not player_match_stats_df.empty:
+        # Add 'gameweek' and 'tournament' columns to the stats dataframe for easy processing
+        match_to_gameweek_map = matches_df.set_index('match_id')['gameweek'].to_dict()
+        player_match_stats_df['gameweek'] = player_match_stats_df['match_id'].map(match_to_gameweek_map)
+        player_match_stats_df['tournament'] = player_match_stats_df['match_id'].map(match_to_tournament_map)
 
-        # Filter and export 'matches' for the current tournament
-        tournament_matches = [m for m in all_matches if m['match_id'].split('-')[1] == tournament]
-        export_data(tournament_matches, "matches", tournament_dir)
+        # Group by the new columns and save
+        for (gw, tourn), group in player_match_stats_df.groupby(['gameweek', 'tournament']):
+            if pd.isna(gw) or pd.isna(tourn):
+                continue
+            output_dir = os.path.join(season_path, f"GW{int(gw)}", tourn)
+            file_path = os.path.join(output_dir, "playermatchstats.csv")
+            update_csv(group.drop(columns=['gameweek', 'tournament']), file_path, unique_cols=['player_id', 'match_id'])
+    print("  > Finished processing 'playermatchstats'.")
 
-        # Filter and export 'playermatchstats' for the current tournament
-        match_ids_for_tournament = [m['match_id'] for m in tournament_matches]
-        if match_ids_for_tournament:
-            player_stats_data = fetch_filtered_records("playermatchstats", "match_id", match_ids_for_tournament)
-            export_data(player_stats_data, "playermatchstats", tournament_dir)
-        else:
-            print(f"No matches found for tournament '{tournament}', skipping playermatchstats.")
+    # --- Process PlayerStats (Split by GW only) ---
+    print("\n--- Processing and saving Player Stats by Gameweek ---")
+    if not player_stats_df.empty:
+        for gw, group in player_stats_df.groupby('gw'):
+            output_dir = os.path.join(season_path, f"GW{int(gw)}")
+            file_path = os.path.join(output_dir, "playerstats.csv")
+            update_csv(group, file_path, unique_cols=['id', 'gw']) # Assuming 'id' is player_id and 'gw' is gameweek
+    print("  > Finished processing 'playerstats'.")
 
-    print("\n--- All exports complete! ---")
+    # --- Update Master Files (Players and Teams) ---
+    print("\n--- Updating master data files ---")
+    if not players_df.empty:
+        update_csv(players_df, os.path.join(season_path, 'players.csv'), unique_cols=['player_id'])
+        print("  > Master 'players.csv' updated.")
+    
+    if not teams_df.empty:
+        update_csv(teams_df, os.path.join(season_path, 'teams.csv'), unique_cols=['team_id'])
+        print("  > Master 'teams.csv' updated.")
+
+    print("\n--- Automated data update process completed successfully! ---")
 
 
 if __name__ == "__main__":
