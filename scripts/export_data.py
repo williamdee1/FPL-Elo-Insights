@@ -28,14 +28,12 @@ def get_latest_finished_gameweek() -> int:
     """Queries the database to find the latest gameweek with at least one finished match."""
     print("Querying database for the latest finished gameweek...")
     try:
-        # We only need the 'gameweek' column for this, which is efficient
         response = supabase.table('matches').select('gameweek').eq('finished', True).execute()
         
         if not response.data:
             print("  > No finished gameweeks found in the database. Starting fresh from Gameweek 1.")
             return 1
         
-        # Extract all gameweek numbers and find the maximum
         finished_gameweeks = [item['gameweek'] for item in response.data if item.get('gameweek') is not None]
         if not finished_gameweeks:
             print("  > No valid gameweeks found in finished matches. Starting from Gameweek 1.")
@@ -43,6 +41,7 @@ def get_latest_finished_gameweek() -> int:
 
         latest_gw = max(finished_gameweeks)
         print(f"  > Latest finished gameweek found in database: {latest_gw}")
+        # We process from the latest finished GW in case there are late updates to it.
         return latest_gw
     except Exception as e:
         print(f"  ERROR: Could not fetch latest gameweek due to an error: {e}. Defaulting to Gameweek 1.")
@@ -67,7 +66,6 @@ def fetch_data_by_ids(table_name: str, column: str, ids: list) -> pd.DataFrame:
         
     print(f"Fetching {len(ids)} related records from '{table_name}' using '{column}'...")
     all_data = []
-    # Supabase has a limit on the number of values in an .in() filter, so we process in chunks
     chunk_size = 500
     for i in range(0, len(ids), chunk_size):
         chunk_ids = ids[i:i + chunk_size]
@@ -86,60 +84,52 @@ def update_csv(df: pd.DataFrame, file_path: str, unique_cols: list):
     Updates a CSV file with new data. It reads the existing file, appends the new data,
     and removes duplicates, keeping only the last (newest) entry for each unique record.
     """
-    # Ensure the directory for the file exists
     create_directory(os.path.dirname(file_path))
 
     if os.path.exists(file_path):
         existing_df = pd.read_csv(file_path)
-        # Ensure dtypes are compatible before concatenation to avoid warnings
-        for col in df.columns:
-            if col in existing_df.columns:
-                df[col] = df[col].astype(existing_df[col].dtype)
+        # FIX #2: REMOVED the aggressive astype loop that caused the ValueError.
+        # We will let Pandas handle the concatenation more naturally.
         combined_df = pd.concat([existing_df, df])
     else:
         combined_df = df
     
-    # Drop duplicates based on the key identifier columns, keeping the latest entry
     updated_df = combined_df.drop_duplicates(subset=unique_cols, keep='last')
     updated_df.to_csv(file_path, index=False)
 
 
 def main():
     """Main function to run the entire data export and processing pipeline."""
-    season = "2024-2025"
+    # FIX #3: Updated the season string.
+    season = "2025-2026"
     season_path = os.path.join('data', season)
     print(f"--- Starting Automated Data Update for Season {season} ---")
     print(f"Timestamp: {datetime.now().strftime('%Y-%m-%d %H:%M:%S UTC')}")
 
-    # 1. INTELLIGENTLY DETERMINE WHICH GAMEWEEKS TO PROCESS
     start_gameweek = get_latest_finished_gameweek()
 
-    # 2. FETCH ONLY THE NECESSARY DATA FROM THE DATABASE
     matches_df = fetch_data_since_gameweek('matches', start_gameweek)
     if matches_df.empty:
         print("\nNo new or updated match data found since last finished gameweek. Process complete.")
         return
 
-    # From the new matches, get IDs to fetch all related data
     relevant_match_ids = matches_df['match_id'].unique().tolist()
     player_match_stats_df = fetch_data_by_ids('playermatchstats', 'match_id', relevant_match_ids)
-    
     player_stats_df = fetch_data_since_gameweek('playerstats', start_gameweek, gameweek_col='gw')
 
-    # Collect unique IDs to update master files for players and teams
     all_player_ids = player_match_stats_df['player_id'].unique().tolist()
     
-    # --- FIX 1: Use the correct column names 'home_team' and 'away_team' ---
     home_team_ids = matches_df['home_team'].unique()
     away_team_ids = matches_df['away_team'].unique()
-    all_team_ids = list(set(home_team_ids) | set(away_team_ids))
+    all_team_ids_float = list(set(home_team_ids) | set(away_team_ids))
 
-    # --- FIX 2: Use the correct column name 'id' when fetching from the 'teams' table ---
+    # FIX #1: Clean the list of team IDs to be integers before sending to the database.
+    # This removes any potential missing values (NaN) and converts floats (e.g., 21.0) to integers (21).
+    all_team_ids = [int(i) for i in all_team_ids_float if pd.notna(i)]
+    
     players_df = fetch_data_by_ids('players', 'player_id', all_player_ids)
     teams_df = fetch_data_by_ids('teams', 'id', all_team_ids) 
 
-    # 3. PROCESS AND SAVE THE FETCHED DATA INTO CSV FILES
-    
     print("\n--- Processing and saving data split by Gameweek and Tournament ---")
     
     match_to_tournament_map = {}
@@ -150,22 +140,20 @@ def main():
         except IndexError:
             print(f"  WARNING: Could not parse tournament from match_id: {row.get('match_id', 'N/A')}")
     
-    # Process Matches
-    for gw, group in matches_df.groupby('gameweek'):
-        for _, match in group.iterrows():
-            tournament = match_to_tournament_map.get(match['match_id'])
-            if tournament:
-                output_dir = os.path.join(season_path, f"GW{gw}", tournament)
-                file_path = os.path.join(output_dir, "matches.csv")
-                update_csv(pd.DataFrame([match]), file_path, unique_cols=['match_id'])
+    if not matches_df.empty:
+        for gw, group in matches_df.groupby('gameweek'):
+            for _, match in group.iterrows():
+                tournament = match_to_tournament_map.get(match['match_id'])
+                if tournament:
+                    output_dir = os.path.join(season_path, f"GW{int(gw)}", tournament)
+                    file_path = os.path.join(output_dir, "matches.csv")
+                    update_csv(pd.DataFrame([match]), file_path, unique_cols=['match_id'])
     print("  > Finished processing 'matches'.")
 
-    # Process PlayerMatchStats
     if not player_match_stats_df.empty:
         match_to_gameweek_map = matches_df.set_index('match_id')['gameweek'].to_dict()
         player_match_stats_df['gameweek'] = player_match_stats_df['match_id'].map(match_to_gameweek_map)
         player_match_stats_df['tournament'] = player_match_stats_df['match_id'].map(match_to_tournament_map)
-
         player_match_stats_df.dropna(subset=['gameweek', 'tournament'], inplace=True)
         player_match_stats_df['gameweek'] = player_match_stats_df['gameweek'].astype(int)
 
@@ -180,7 +168,6 @@ def main():
         for gw, group in player_stats_df.groupby('gw'):
             output_dir = os.path.join(season_path, f"GW{int(gw)}")
             file_path = os.path.join(output_dir, "playerstats.csv")
-            # --- FIX 3: Assume the 'teams' table primary key is 'id' ---
             update_csv(group, file_path, unique_cols=['id', 'gw']) 
     print("  > Finished processing 'playerstats'.")
 
@@ -190,7 +177,6 @@ def main():
         print("  > Master 'players.csv' updated.")
     
     if not teams_df.empty:
-        # --- FIX 4: Assume the 'teams' table primary key is 'id' ---
         update_csv(teams_df, os.path.join(season_path, 'teams.csv'), unique_cols=['id'])
         print("  > Master 'teams.csv' updated.")
 
