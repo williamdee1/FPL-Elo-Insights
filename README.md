@@ -1,59 +1,71 @@
-#Updated Data to include clearances, blocks, interceptions and tackles (CBIT) for every player in 24/25 season 
+# FPL-Elo-Insights: A Comprehensive FPL Dataset for the 2025/26 Season
 
+Welcome to FPL-Elo-Insights, a meticulously curated dataset designed to empower your Fantasy Premier League analysis beyond the surface. This project uniquely links official FPL player data with detailed match statistics and historical team Elo ratings, allowing for unparalleled insights.
 
-# Season Updates
-# 2025/26 Season - Coming Soon!
-Hey everyone! Just a heads up that the automated updates are currently taking a well-deserved summer break. Once the official FPL API wakes up for the 2025/26 season 
-(usually around July when we all start getting excited about our new fantasy teams!), everything will spring back to life automatically
+It combines three powerful data sources:
+1.  **Official FPL API Data**: All the essential player points, costs, form, ownership, xG/xA, and more.
+2.  **Manually Curated Match Stats (Opta-like)**: Deep-dive performance metrics for every player and match.
+3.  **ClubElo.com Elo Ratings**: Historical and current team strength ratings for robust fixture analysis.
 
-# FPL-Elo-Insights: A Comprehensive Dataset for Premier League Analysis
+## What's New for the 2025/26 Season?
 
-This repository houses a meticulously curated dataset that combines Fantasy Premier League (FPL) data, manually collected match statistics, and historical Elo ratings to provide a powerful resource for in-depth football analysis, particularly for the FPL
+This season, FPL-Elo-Insights is taking a massive leap forward, pushing beyond what inspired this project to deliver an even richer analytical experience.
 
-## Data Updates and Availability
+### 🏆 Expanded Tournament Coverage Synced to FPL Players
+This is the big one! The dataset now includes data from all major competitions, including **pre-season friendlies (which isnt great. spotty at best), domestic cups (FA Cup, League Cup), and all European competitions (Champions League, Europa League, Conference League).**
+
+Crucially, this vast new data is directly linked to your FPL player IDs, allowing you to seamlessly track how players perform across all competitions and see how it might impact their FPL potential. No more guessing how pre-season form or European fatigue could influence your picks!
+
+### 🛡️ Enhanced Defensive & Midfield Metrics (CBIT)
+Following the new FPL rules that reward defensive contributions, I've integrated **Clearances, Blocks, Interceptions, and Tackles (CBIT)** for every player in every match. This means you can now:
+*   Identify defensive gems who might rack up points under the new FPL rules.
+*   Analyze how effectively players contribute defensively beyond just clean sheets.
+*   Spot differentials in midfield and defense who excel in these often-overlooked areas.
+
+### 📂 New & Improved Data Structure
+The data is now organized into a more intuitive structure to make analysis easier than ever. You can access data sliced in different ways depending on your needs.
+
+## Data Updates
 
 The dataset is automatically refreshed twice daily at:
-- 5:00 AM UTC
-- 5:00 PM UTC
+- **5:00 AM UTC**
+- **5:00 PM UTC**
 
-## Data Format
+All data is provided in **CSV format** for easy import into any data analysis tool.
 
-All data is available in two formats:
-- CSV files for easy import into data analysis tools
-- SQL DB files 
+## Data Structure Overview
 
-## Table Overview
+The data for the season is organized into three main categories within the `data/2025-2026/` directory:
 
-| Table Name | Description | Key Features | Primary Use Cases |
-|------------|-------------|--------------|-------------------|
-| matches | Comprehensive match-level data | Contains detailed statistics for each match including scores, possession, shots, and team performance metrics | Match analysis, team performance tracking, and fixture difficulty assessment |
-| playermatchstats | Detailed player statistics for each match | Individual player performance metrics including goals, assists, touches, passes, and defensive actions | Player performance analysis, scouting, and historical tracking |
-| players | Basic player information from FPL API | Core player details including name, position, and team affiliation | Player identification and basic information lookup |
-| playerstats | FPL-specific player statistics | Extensive FPL metrics including costs, ownership, form, and expected performance indicators | FPL strategy, player valuation, and transfer planning |
-| teams | Team information and strength indicators | Team details, strength ratings, and Elo scores | Team analysis, fixture difficulty assessment, and performance tracking |
+1.  **Master Files**
+    *   Location: `/`
+    *   Description: These are the main, always-up-to-date files for the entire season.
+    *   Files: `players.csv`, `teams.csv`, `playerstats.csv`
 
-## Using
-Feel free to use the data from this repository in whatever way works best for you—whether for your website, blog posts, or other projects. If possible, I’d greatly appreciate it if you could include a link back to this repository as the data source. Without completly copying the amazing [vaastav/Fantasy-Premier-League](https://github.com/vaastav/Fantasy-Premier-League). I’d be happy to feature a link to your post or site as a notable usage of the repository!
+2.  **By Gameweek**
+    *   Location: `By Gameweek/GW{x}/`
+    *   Description: Contains a complete snapshot of all data relevant to a specific gameweek.
+    *   Files: `matches.csv`, `playermatchstats.csv`, `playerstats.csv`, `players.csv`, `teams.csv`
 
-## Data Sources
+3.  **By Tournament**
+    *   Location: `By Tournament/{tournament_name}/GW{x}/`
+    *   Description: Contains a self-contained snapshot of all data for a specific tournament within a specific gameweek.
+    *   Files: `matches.csv`, `playermatchstats.csv`, `playerstats.csv`, `players.csv`, `teams.csv`
 
-This project leverages data from the following sources:
+## Using The Data
+Feel free to use the data from this repository in whatever way works best for you—whether for your website, blog posts, or other projects. If possible, I’d greatly appreciate it if you could include a link back to this repository as the data source.
 
-*   **Manually Curated Match Statistics:** This dataset includes a wide array of detailed match events, player statistics (e.g., touches, duels, shots, etc.), and other relevant football data. 
-*   **Club Elo Ratings:** Historical and current Elo ratings for all Premier League teams are sourced from [ClubElo.com](http://clubelo.com/).
-*   **Official Fantasy Premier League API:**  The official FPL API provides a wealth of data, including player statistics, weekly points, form, cost, and ownership percentages.
+Inspired by the amazing work of [vaastav/Fantasy-Premier-League](https://github.com/vaastav/Fantasy-Premier-League), this project aims to continue the spirit of open data in the FPL community. If you build something cool, let me know – I'd be happy to feature a link to your project!
 
 ## Data Tables Explained
 
-The repository contains the following interconnected data tables:
-
 ### `matches`
 
-This table contains comprehensive match-level data, including:
+This table contains comprehensive match-level data for all finished games.
 
 *   **`gameweek`:** The gameweek of the match.
 *   **`kickoff_time`:** The date and time of the match kickoff.
-*   **`home_team`, `away_team`:**  IDs of the home and away teams (referencing the `teams` table).
+*   **`home_team`, `away_team`:** IDs of the home and away teams (referencing the `teams` table).
 *   **`home_team_elo`, `away_team_elo`:** Elo ratings of the home and away teams at the time of the match (or current Elo if the match is in the future).
 *   **`home_score`, `away_score`:** The final score of the match.
 *   **`finished`:** Boolean indicating whether the match has finished.
@@ -113,13 +125,12 @@ This table contains comprehensive match-level data, including:
 *   **`home_team_difficulty`, `away_team_difficulty`:** Difficulty ratings for the home and away teams (currently not populated).
 
 **Links:**
-
 *   `home_team` and `away_team` link to the `id` column in the `teams` table.
 *   `match_id` links to the `match_id` column in the `playermatchstats` table.
 
 ### `playermatchstats`
 
-This table provides detailed player-level statistics for each match:
+This table provides detailed player-level statistics for each match, now including enhanced defensive metrics.
 
 *   **`player_id`:** The ID of the player (referencing the `players` table).
 *   **`match_id`:** The ID of the match (referencing the `matches` table).
@@ -166,13 +177,12 @@ This table provides detailed player-level statistics for each match:
 *   **`gk_accurate_long_balls`:** Accurate long balls made by the goalkeeper.
 
 **Links:**
-
-*   `player_id` links to the `id` column in the `players` table.
+*   `player_id` links to the `player_id` column in the `players` table.
 *   `match_id` links to the `match_id` column in the `matches` table.
 
 ### `players`
 
-This table contains basic information about each player from the FPL API:
+This table contains basic information about each player from the FPL API.
 
 *   **`player_code`:** The unique code for the player in the FPL API.
 *   **`player_id`:** A unique identifier for each player within this dataset.
@@ -183,13 +193,12 @@ This table contains basic information about each player from the FPL API:
 *   **`position`:** The player's position (e.g., Goalkeeper, Defender, Midfielder, Forward).
 
 **Links:**
-
 *   `player_id` links to the `player_id` column in the `playermatchstats` table.
 *   `team_id` links to the `id` column in the `teams` table.
 
 ### `playerstats`
 
-This table stores a wide range of FPL player statistics:
+This table stores a wide range of FPL player statistics, updated per gameweek.
 
 *   **`id`:** The ID of the player (referencing the `player_id` in the `players` table).
 *   **`status`:** The player's availability status (e.g., available, injured, suspended).
@@ -230,18 +239,17 @@ This table stores a wide range of FPL player statistics:
 *   **`creativity`, `creativity_rank`, `creativity_rank_type`:** Measures of a player's creativity.
 *   **`threat`, `threat_rank`, `threat_rank_type`:** Measures of a player's attacking threat.
 *   **`ict_index`, `ict_index_rank`, `ict_index_rank_type`:** ICT Index (Influence, Creativity, Threat) and its ranks.
-*   **`corners_and_indirect_freekicks_order`:**  Indicates if the player is likely to take corners and indirect freekicks.
+*   **`corners_and_indirect_freekicks_order`:** Indicates if the player is likely to take corners and indirect freekicks.
 *   **`direct_freekicks_order`:** Indicates if the player is likely to take direct freekicks.
 *   **`penalties_order`:** Indicates if the player is likely to take penalties.
 *   **`gw`:** The gameweek these stats apply to.
 
 **Links:**
-
 *   `id` links to the `player_id` in the `players` table.
 
 ### `teams`
 
-This table contains information about each team from the FPL API:
+This table contains information about each team from the FPL API.
 
 *   **`code`:** The team's unique code in the FPL API.
 *   **`id`:** A unique identifier for each team within this dataset.
@@ -258,12 +266,5 @@ This table contains information about each team from the FPL API:
 *   **`elo`:** The team's Elo rating.
 
 **Links:**
-
 *   `id` links to `home_team` and `away_team` in the `matches` table.
 *   `id` also links to `team_id` in the `players` table.
-
-## Contributing
-
-Contributions to this project are welcome! If you have suggestions for improvements, additional data sources, or want to help fill in the missing data, please feel free to open an issue 
-
-
