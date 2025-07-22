@@ -75,6 +75,7 @@ def fetch_data_by_ids(table_name: str, column: str, ids: list) -> pd.DataFrame:
     return df
 
 def update_csv(df: pd.DataFrame, file_path: str, unique_cols: list):
+    if df.empty: return
     create_directory(os.path.dirname(file_path))
     if os.path.exists(file_path):
         existing_df = pd.read_csv(file_path)
@@ -98,20 +99,16 @@ def main():
         print("\nNo new or updated match data found. Process complete.")
         return
 
-    # --- FIX 1: Filter to only process matches that have finished ---
-    # We fetch all matches from the start_gameweek, but will only operate on the finished ones.
     finished_matches_df = matches_df[matches_df['finished'] == True].copy()
     if finished_matches_df.empty:
         print("\nNo newly finished matches found to process. Process complete.")
         return
-        
     print(f"  > Found {len(finished_matches_df)} newly finished matches to process.")
 
-    # Fetch related data based ONLY on the finished matches
+    # --- Fetch all related data based on finished matches ---
     relevant_match_ids = finished_matches_df['match_id'].unique().tolist()
     player_match_stats_df = fetch_data_by_ids('playermatchstats', 'match_id', relevant_match_ids)
     
-    # We still fetch playerstats by gameweek number, as a player's stats can update even if they didn't play.
     active_gameweeks = finished_matches_df['gameweek'].unique()
     player_stats_df = fetch_data_since_gameweek('playerstats', start_gameweek=int(active_gameweeks.min()), gameweek_col='gw')
 
@@ -123,7 +120,8 @@ def main():
     players_df = fetch_data_by_ids('players', 'player_id', active_player_ids)
     teams_df = fetch_data_by_ids('teams', 'id', active_team_ids) 
 
-    print("\n--- Processing and saving data into directory structure ---")
+    # --- Pre-process DataFrames by adding helper columns for easy filtering ---
+    print("\n--- Pre-processing data for saving ---")
     
     match_to_tournament_map = {}
     for _, row in finished_matches_df.iterrows():
@@ -132,59 +130,66 @@ def main():
             tournament_folder_name = TOURNAMENT_NAME_MAP.get(tournament_slug, tournament_slug)
             match_to_tournament_map[row['match_id']] = tournament_folder_name
         except IndexError:
-            print(f"  WARNING: Could not parse tournament from match_id: {row.get('match_id', 'N/A')}")
+            pass # Silently ignore malformed match_ids
     
-    # --- 1. Save data into the 'By Tournament' structure ---
-    for gw, group in finished_matches_df.groupby('gameweek'):
-        for _, match in group.iterrows():
-            tournament_folder = match_to_tournament_map.get(match['match_id'])
-            if tournament_folder:
-                output_dir = os.path.join(season_path, "By Tournament", tournament_folder, f"GW{int(gw)}")
-                update_csv(pd.DataFrame([match]), os.path.join(output_dir, "matches.csv"), unique_cols=['match_id'])
-    print("  > Processed 'matches' into 'By Tournament' structure.")
+    # Add helper columns to relevant dataframes
+    finished_matches_df['tournament'] = finished_matches_df['match_id'].map(match_to_tournament_map)
+    player_match_stats_df['gameweek'] = player_match_stats_df['match_id'].map(finished_matches_df.set_index('match_id')['gameweek'])
+    player_match_stats_df['tournament'] = player_match_stats_df['match_id'].map(match_to_tournament_map)
+    
+    print("\n--- Saving data into directory structures ---")
 
-    if not player_match_stats_df.empty:
-        match_to_gameweek_map = finished_matches_df.set_index('match_id')['gameweek'].to_dict()
-        player_match_stats_df['gameweek'] = player_match_stats_df['match_id'].map(match_to_gameweek_map)
-        player_match_stats_df['tournament'] = player_match_stats_df['match_id'].map(match_to_tournament_map)
-        player_match_stats_df.dropna(subset=['gameweek', 'tournament'], inplace=True)
-        player_match_stats_df['gameweek'] = player_match_stats_df['gameweek'].astype(int)
+    # --- 1. Save data into the 'By Gameweek' structure ---
+    for gw in active_gameweeks:
+        gw = int(gw)
+        gw_dir = os.path.join(season_path, "By Gameweek", f"GW{gw}")
+        
+        # Filter all data for this specific gameweek
+        gw_matches = finished_matches_df[finished_matches_df['gameweek'] == gw]
+        gw_pms = player_match_stats_df[player_match_stats_df['gameweek'] == gw]
+        gw_player_stats = player_stats_df[player_stats_df['gw'] == gw]
+        
+        # Determine active players and teams for this gameweek specifically
+        gw_player_ids = gw_pms['player_id'].unique()
+        gw_players = players_df[players_df['player_id'].isin(gw_player_ids)]
+        gw_home_teams = gw_matches['home_team'].dropna().unique()
+        gw_away_teams = gw_matches['away_team'].dropna().unique()
+        gw_team_ids = [int(i) for i in list(set(gw_home_teams) | set(gw_away_teams))]
+        gw_teams = teams_df[teams_df['id'].isin(gw_team_ids)]
+        
+        # Save all files to the gameweek folder
+        update_csv(gw_matches.drop(columns=['tournament'], errors='ignore'), os.path.join(gw_dir, "matches.csv"), unique_cols=['match_id'])
+        update_csv(gw_pms.drop(columns=['gameweek', 'tournament'], errors='ignore'), os.path.join(gw_dir, "playermatchstats.csv"), unique_cols=['player_id', 'match_id'])
+        update_csv(gw_player_stats, os.path.join(gw_dir, "playerstats.csv"), unique_cols=['id', 'gw'])
+        update_csv(gw_players, os.path.join(gw_dir, "players.csv"), unique_cols=['player_id'])
+        update_csv(gw_teams, os.path.join(gw_dir, "teams.csv"), unique_cols=['id'])
+        
+    print("  > Processed all data into 'By Gameweek' structure.")
 
-        for (gw, tourn), group in player_match_stats_df.groupby(['gameweek', 'tournament']):
-            output_dir = os.path.join(season_path, "By Tournament", tourn, f"GW{gw}")
-            update_csv(group.drop(columns=['gameweek', 'tournament']), os.path.join(output_dir, "playermatchstats.csv"), unique_cols=['player_id', 'match_id'])
-            
-            # --- FIX 3: Create tournament-specific player stats snapshot ---
-            if not player_stats_df.empty:
-                players_in_group = group['player_id'].unique()
-                stats_snapshot = player_stats_df[
-                    (player_stats_df['id'].isin(players_in_group)) & (player_stats_df['gw'] == gw)
-                ]
-                if not stats_snapshot.empty:
-                    update_csv(stats_snapshot, os.path.join(output_dir, "playerstats.csv"), unique_cols=['id', 'gw'])
-
-    print("  > Processed 'playermatchstats' and tournament-specific 'playerstats' into 'By Tournament' structure.")
-
-    # --- 2. Save Gameweek Snapshots into the 'By Gameweek' structure ---
-    if not player_stats_df.empty:
-        for gw, group in player_stats_df.groupby('gw'):
-            # Only create snapshots for gameweeks that had finished matches
-            if gw in active_gameweeks:
-                output_dir = os.path.join(season_path, "By Gameweek", f"GW{int(gw)}")
-                update_csv(group, os.path.join(output_dir, "playerstats.csv"), unique_cols=['id', 'gw'])
-    print("  > Processed 'playerstats' snapshots into 'By Gameweek' structure.")
-
-    if not players_df.empty:
-        for gw in active_gameweeks:
-            output_dir = os.path.join(season_path, "By Gameweek", f"GW{int(gw)}")
-            update_csv(players_df, os.path.join(output_dir, "players.csv"), unique_cols=['player_id'])
-    print("  > Processed 'players' snapshots into 'By Gameweek' structure.")
-
-    if not teams_df.empty:
-        for gw in active_gameweeks:
-            output_dir = os.path.join(season_path, "By Gameweek", f"GW{int(gw)}")
-            update_csv(teams_df, os.path.join(output_dir, "teams.csv"), unique_cols=['id'])
-    print("  > Processed 'teams' snapshots into 'By Gameweek' structure.")
+    # --- 2. Save data into the 'By Tournament' structure ---
+    for (gw, tourn), group in finished_matches_df.groupby(['gameweek', 'tournament']):
+        gw, tourn = int(gw), str(tourn)
+        tourn_dir = os.path.join(season_path, "By Tournament", tourn, f"GW{gw}")
+        
+        # Get related data for this specific tournament-gameweek slice
+        tourn_match_ids = group['match_id'].unique()
+        tourn_pms = player_match_stats_df[player_match_stats_df['match_id'].isin(tourn_match_ids)]
+        tourn_player_ids = tourn_pms['player_id'].unique()
+        tourn_players = players_df[players_df['player_id'].isin(tourn_player_ids)]
+        tourn_player_stats = player_stats_df[(player_stats_df['id'].isin(tourn_player_ids)) & (player_stats_df['gw'] == gw)]
+        tourn_home_teams = group['home_team'].dropna().unique()
+        tourn_away_teams = group['away_team'].dropna().unique()
+        tourn_team_ids = [int(i) for i in list(set(tourn_home_teams) | set(tourn_away_teams))]
+        tourn_teams = teams_df[teams_df['id'].isin(tourn_team_ids)]
+        
+        # Save all files to the tournament-gameweek folder
+        update_csv(group.drop(columns=['tournament'], errors='ignore'), os.path.join(tourn_dir, "matches.csv"), unique_cols=['match_id'])
+        update_csv(tourn_pms.drop(columns=['gameweek', 'tournament'], errors='ignore'), os.path.join(tourn_dir, "playermatchstats.csv"), unique_cols=['player_id', 'match_id'])
+        update_csv(tourn_player_stats, os.path.join(tourn_dir, "playerstats.csv"), unique_cols=['id', 'gw'])
+        update_csv(tourn_players, os.path.join(tourn_dir, "players.csv"), unique_cols=['player_id'])
+        update_csv(tourn_teams, os.path.join(tourn_dir, "teams.csv"), unique_cols=['id'])
+        
+    print("  > Processed all data into 'By Tournament' structure.")
 
     # --- 3. Update Master Files in the root season folder ---
     print("\n--- Updating master data files ---")
@@ -196,7 +201,6 @@ def main():
         update_csv(teams_df, os.path.join(season_path, 'teams.csv'), unique_cols=['id'])
         print("  > Master 'teams.csv' updated.")
     
-    # --- FIX 2: Add master playerstats.csv file update ---
     if not player_stats_df.empty:
         update_csv(player_stats_df, os.path.join(season_path, 'playerstats.csv'), unique_cols=['id', 'gw'])
         print("  > Master 'playerstats.csv' updated.")
