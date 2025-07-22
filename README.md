@@ -12,7 +12,7 @@ It combines three powerful data sources:
 This season, FPL-Elo-Insights is taking a massive leap forward, pushing beyond what inspired this project to deliver an even richer analytical experience.
 
 ### 🏆 Expanded Tournament Coverage Synced to FPL Players
-This is the big one! The dataset now includes data from all major competitions, including **pre-season friendlies, domestic cups (FA Cup, League Cup), and all European competitions (Champions League, Europa League, Conference League).**
+This is the big one! The dataset now includes data from all major competitions, including **pre-season friendlies (which isnt great. spotty at best), domestic cups (FA Cup, League Cup), and all European competitions (Champions League, Europa League, Conference League).**
 
 Crucially, this vast new data is directly linked to your FPL player IDs, allowing you to seamlessly track how players perform across all competitions and see how it might impact their FPL potential. No more guessing how pre-season form or European fatigue could influence your picks!
 
