@@ -1,0 +1,136 @@
+#!/usr/bin/env python3
+"""
+Script to split matches and playermatchstats CSV files by gameweek.
+Creates separate folders for each gameweek containing the relevant data.
+"""
+
+import pandas as pd
+import os
+from pathlib import Path
+import argparse
+
+def create_gameweek_folders(base_path, gameweeks):
+    """Create folders for each gameweek if they don't exist."""
+    folders = {}
+    for gw in gameweeks:
+        folder_path = base_path / f"gameweek_{gw}"
+        folder_path.mkdir(parents=True, exist_ok=True)
+        folders[gw] = folder_path
+    return folders
+
+def split_matches_by_gameweek(matches_file, output_base_path):
+    """Split matches CSV by gameweek and return gameweek mapping."""
+    print(f"Reading matches from: {matches_file}")
+    
+    # Read matches CSV
+    matches_df = pd.read_csv(matches_file)
+    
+    # Get unique gameweeks
+    gameweeks = sorted(matches_df['gameweek'].unique())
+    print(f"Found gameweeks: {gameweeks}")
+    
+    # Create folders
+    folders = create_gameweek_folders(output_base_path, gameweeks)
+    
+    # Create match_id to gameweek mapping for later use
+    match_gameweek_map = dict(zip(matches_df['match_id'], matches_df['gameweek']))
+    
+    # Split and save matches by gameweek
+    for gw in gameweeks:
+        gw_matches = matches_df[matches_df['gameweek'] == gw]
+        output_file = folders[gw] / "matches.csv"
+        gw_matches.to_csv(output_file, index=False)
+        print(f"Saved {len(gw_matches)} matches for gameweek {gw} to {output_file}")
+    
+    return match_gameweek_map, folders
+
+def split_playermatchstats_by_gameweek(stats_file, match_gameweek_map, folders):
+    """Split playermatchstats CSV by gameweek using match_id mapping."""
+    print(f"Reading player match stats from: {stats_file}")
+    
+    # Read playermatchstats CSV
+    stats_df = pd.read_csv(stats_file)
+    
+    # Add gameweek column based on match_id mapping
+    stats_df['gameweek'] = stats_df['match_id'].map(match_gameweek_map)
+    
+    # Remove rows where match_id couldn't be mapped (shouldn't happen in clean data)
+    unmapped_rows = stats_df['gameweek'].isna().sum()
+    if unmapped_rows > 0:
+        print(f"Warning: {unmapped_rows} rows couldn't be mapped to a gameweek")
+        stats_df = stats_df.dropna(subset=['gameweek'])
+    
+    # Split and save by gameweek
+    for gw, folder in folders.items():
+        gw_stats = stats_df[stats_df['gameweek'] == gw]
+        if len(gw_stats) > 0:
+            # Drop the temporary gameweek column before saving
+            gw_stats_clean = gw_stats.drop('gameweek', axis=1)
+            output_file = folder / "playermatchstats.csv"
+            gw_stats_clean.to_csv(output_file, index=False)
+            print(f"Saved {len(gw_stats)} player stats for gameweek {gw} to {output_file}")
+
+def main():
+    parser = argparse.ArgumentParser(description='Split CSV files by gameweek')
+    parser.add_argument('--matches', 
+                       default='data/2024-2025/matches/matches.csv',
+                       help='Path to matches CSV file')
+    parser.add_argument('--playerstats', 
+                       default='data/2024-2025/playermatchstats/playermatchstats.csv',
+                       help='Path to playermatchstats CSV file')
+    parser.add_argument('--output', 
+                       default='data/2024-2025/by_gameweek',
+                       help='Output directory for gameweek folders')
+    
+    args = parser.parse_args()
+    
+    # Convert paths to Path objects
+    matches_file = Path(args.matches)
+    stats_file = Path(args.playerstats)
+    output_path = Path(args.output)
+    
+    # Check if input files exist
+    if not matches_file.exists():
+        print(f"Error: Matches file not found: {matches_file}")
+        return
+    
+    if not stats_file.exists():
+        print(f"Error: Player stats file not found: {stats_file}")
+        return
+    
+    print("Starting CSV split by gameweek...")
+    print(f"Matches file: {matches_file}")
+    print(f"Player stats file: {stats_file}")
+    print(f"Output directory: {output_path}")
+    print("-" * 50)
+    
+    try:
+        # Split matches and get mapping
+        match_gameweek_map, folders = split_matches_by_gameweek(matches_file, output_path)
+        
+        # Split player match stats using the mapping
+        split_playermatchstats_by_gameweek(stats_file, match_gameweek_map, folders)
+        
+        print("-" * 50)
+        print("Split completed successfully!")
+        print(f"Created {len(folders)} gameweek folders in: {output_path}")
+        
+        # Show summary
+        print("\nSummary:")
+        for gw, folder in folders.items():
+            matches_file = folder / "matches.csv"
+            stats_file = folder / "playermatchstats.csv"
+            print(f"Gameweek {gw}: {folder}")
+            if matches_file.exists():
+                matches_count = len(pd.read_csv(matches_file))
+                print(f"  - {matches_count} matches")
+            if stats_file.exists():
+                stats_count = len(pd.read_csv(stats_file))
+                print(f"  - {stats_count} player stats records")
+        
+    except Exception as e:
+        print(f"Error: {e}")
+        return
+
+if __name__ == "__main__":
+    main()
