@@ -1,9 +1,3 @@
-#!/usr/bin/env python3
-"""
-Script to split matches and playermatchstats CSV files by gameweek.
-Creates separate folders for each gameweek containing the relevant data.
-"""
-
 import pandas as pd
 import os
 from pathlib import Path
