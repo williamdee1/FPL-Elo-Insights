@@ -1,39 +1,80 @@
-name: Data Export
+name: Split CSV Files by Gameweek
 
 on:
-  schedule:
-    - cron: '0 5 * * *'    # Runs daily at 5:00 UTC
-    - cron: '0 17 * * *'   # Runs daily at 17:00 UTC
-  workflow_dispatch:        # Allows manual trigger
+  # Trigger manually from GitHub UI
+  workflow_dispatch:
+  
+  # Trigger on push to main branch when CSV files change
+  push:
+    branches: [ main ]
+    paths:
+      - 'data/2024-2025/matches/*.csv'
+      - 'data/2024-2025/playermatchstats/*.csv'
+  
+  # Optional: Run on schedule (e.g., daily at 6 AM UTC)
+  # schedule:
+  #   - cron: '0 6 * * *'
 
 jobs:
-  export-data:
+  split-csv-files:
     runs-on: ubuntu-latest
-
+    permissions:
+      contents: write
+    
     steps:
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0  # Important for git history
-
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.10'
-
-      - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install pandas numpy supabase python-dotenv
-
-      - name: Process FPL data
-        env:
-          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
-          SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
-        run: python scripts/export_data.py
-
-      - name: Commit and push changes (Data Export)
-        run: |
-          git config --local user.email "github-actions[bot]@users.noreply.github.com"
-          git config --local user.name "github-actions[bot]"
-          git add data/
-          git diff --quiet && git diff --staged --quiet || (git commit -m "Auto-update FPL data $(date +'%Y-%m-%d %H:%M UTC')" && git push)
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
+        fetch-depth: 0
+      
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
+        
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install pandas
+        
+    - name: Check if CSV files exist
+      run: |
+        if [ ! -f "data/2024-2025/matches/matches.csv" ]; then
+          echo "❌ matches.csv not found"
+          exit 1
+        fi
+        if [ ! -f "data/2024-2025/playermatchstats/playermatchstats.csv" ]; then
+          echo "❌ playermatchstats.csv not found"
+          exit 1
+        fi
+        echo "✅ Both CSV files found"
+        
+    - name: Run CSV split script
+      run: |
+        python split_by_gameweek.py \
+          --matches data/2024-2025/matches/matches.csv \
+          --playerstats data/2024-2025/playermatchstats/playermatchstats.csv \
+          --output data/2024-2025/by_gameweek
+          
+    - name: Show generated structure
+      run: |
+        echo "Generated folder structure:"
+        find data/2024-2025/by_gameweek -type f -name "*.csv" | head -20
+        
+    - name: Commit and push changes
+      run: |
+        git config --local user.email "41898282+github-actions[bot]@users.noreply.github.com"
+        git config --local user.name "github-actions[bot]"
+        
+        # Add the new files
+        git add data/2024-2025/by_gameweek/
+        
+        # Check if there are changes to commit
+        if git diff --staged --quiet; then
+          echo "No changes to commit"
+        else
+          git commit -m "Auto-update: Split CSV files by gameweek [skip ci]"
+          git push
+          echo "✅ Changes committed and pushed"
+        fi
