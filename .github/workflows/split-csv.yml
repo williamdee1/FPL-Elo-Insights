@@ -1,8 +1,19 @@
-name: Split CSV Files by Gameweek (Simple)
+name: Split CSV Files by Gameweek
 
 on:
   # Trigger manually from GitHub UI
   workflow_dispatch:
+  
+  # Trigger on push to main branch when CSV files change
+  push:
+    branches: [ main ]
+    paths:
+      - 'data/2024-2025/matches/*.csv'
+      - 'data/2024-2025/playermatchstats/*.csv'
+  
+  # Optional: Run on schedule (e.g., daily at 6 AM UTC)
+  # schedule:
+  #   - cron: '0 6 * * *'
 
 jobs:
   split-csv-files:
@@ -22,13 +33,45 @@ jobs:
         python -m pip install --upgrade pip
         pip install pandas
         
+    - name: Check if CSV files exist
+      run: |
+        if [ ! -f "data/2024-2025/matches/matches.csv" ]; then
+          echo "❌ matches.csv not found"
+          exit 1
+        fi
+        if [ ! -f "data/2024-2025/playermatchstats/playermatchstats.csv" ]; then
+          echo "❌ playermatchstats.csv not found"
+          exit 1
+        fi
+        echo "✅ Both CSV files found"
+        
     - name: Run CSV split script
       run: |
-        python split_by_gameweek.py
+        python split_by_gameweek.py \
+          --matches data/2024-2025/matches/matches.csv \
+          --playerstats data/2024-2025/playermatchstats/playermatchstats.csv \
+          --output data/2024-2025/by_gameweek
+          
+    - name: Show generated structure
+      run: |
+        echo "Generated folder structure:"
+        find data/2024-2025/by_gameweek -type f -name "*.csv" | head -20
         
-    - name: Upload split files as artifact
-      uses: actions/upload-artifact@v3
-      with:
-        name: gameweek-split-csvs
-        path: data/2024-2025/by_gameweek/
-        retention-days: 30
+    - name: Commit and push changes
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      run: |
+        git config --local user.email "action@github.com"
+        git config --local user.name "GitHub Action"
+        
+        # Add the new files
+        git add data/2024-2025/by_gameweek/
+        
+        # Check if there are changes to commit
+        if git diff --staged --quiet; then
+          echo "No changes to commit"
+        else
+          git commit -m "Auto-update: Split CSV files by gameweek [skip ci]"
+          git push
+          echo "✅ Changes committed and pushed"
+        fi
