@@ -1,5 +1,10 @@
 import matplotlib.pyplot as plt
 import polars as pl
+import pandas as pd
+import numpy as np
+
+from scripts.data_curate_25 import FplData
+from scripts.utils import return_team_name, return_team_data
 
 
 def plot_player_cumulative_points(ml_dataset_featured, player_id, figsize=(12, 6)):
@@ -123,3 +128,74 @@ def plot_player_cumulative_points(ml_dataset_featured, player_id, figsize=(12, 6
     plt.tight_layout()
     
     return fig, ax
+
+
+#-------------------------#
+# Fixture Radar Plots
+#-------------------------#
+def min_max_normalize(df, all_team_df, columns):
+    return df.select([(pl.col(c) - all_team_df[c].min()) / (all_team_df[c].max() - all_team_df[c].min()) for c in columns])
+
+def plot_radar(ax, df, all_team_df, columns, team_name, color, size):
+    # Normalize:
+    df = min_max_normalize(df, all_team_df, columns)
+
+    # Average across the rows of the dataframe to get mean metrics:
+    df = df.select([pl.col(c).mean().alias(c) for c in columns])
+
+    values = df.select(columns).to_numpy()[0]
+    N = len(columns)
+    
+    angles = np.linspace(0, 2 * np.pi, N, endpoint=False).tolist()
+    values = np.concatenate((values, [values[0]]))       # close the loop
+    angles += angles[:1]
+
+    ax.plot(angles, values, 'o-', linewidth=2, label=team_name, color=color, markersize=size-4)
+    ax.fill(angles, values, alpha=0.25, color=color)
+    ax.set_thetagrids(np.degrees(angles[:-1]), columns, fontsize=size)
+    ax.set_ylim(0, 1)
+
+
+def compare_radars(fpl_data, team_name1, team_name2, ax=None, size=8, gw_range=None):
+    attack_cols = ['team_total_shots','team_shots_on_target','team_big_chances', 'team_opposition_half',
+                    'team_xg_open_play','team_xg_set_play', 'team_accurate_passes',
+                    'team_touches_in_opposition_box','team_successful_dribbles']
+
+    team1_df = return_team_data(fpl_data, team_name=team_name1, gw_range=gw_range)
+    team2_df = return_team_data(fpl_data, team_name=team_name2, gw_range=gw_range)
+
+    if not ax:
+        fig, ax = plt.subplots(figsize=(6,6), subplot_kw=dict(polar=True))
+    plot_radar(ax, team1_df, fpl_data.merged_data, attack_cols, team_name1, color='#45B7D1', size=size)
+    plot_radar(ax, team2_df, fpl_data.merged_data, attack_cols, team_name2, color='#FF6B6B', size=size)
+    ax.set_title(f"{team_name1} vs {team_name2}", size=size+3, color='#1D293D', weight='bold')
+    ax.margins(0)
+
+    if not ax:
+        plt.show()
+
+def plot_fixture_radars(fpl_data: FplData,
+                        year: str,
+                        gameweek: int,
+                        cols: int = 4,
+                        gw_range: tuple = None):
+    gw_fixtures = pd.read_csv(f'data/{year}/By Gameweek/GW{gameweek}/fixtures.csv')
+    fig, axes = plt.subplots(nrows=-(-len(gw_fixtures)//cols), 
+                             ncols=cols, 
+                             figsize=(cols*5, cols*4), 
+                             subplot_kw=dict(polar=True))
+    axes = axes.flatten()
+
+    for idx, row in gw_fixtures.iterrows():
+        home_team_code = row['home_team']
+        away_team_code = row['away_team']
+        home_team_name = return_team_name(fpl_data, team_id=home_team_code)
+        away_team_name = return_team_name(fpl_data, team_id=away_team_code)
+
+        # Plot radar charts for each fixture
+        ax = axes[idx]
+        compare_radars(fpl_data, home_team_name, away_team_name, ax=ax, size=8, gw_range=gw_range)
+
+    for j in range(len(gw_fixtures), len(axes)):
+        fig.delaxes(axes[j])
+    plt.show()
