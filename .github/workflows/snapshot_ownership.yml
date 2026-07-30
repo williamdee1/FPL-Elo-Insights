@@ -1,0 +1,29 @@
+name: Daily Ownership Snapshot
+
+on:
+  schedule:
+    - cron: '0 8 * * *'   # 08:00 UTC daily
+  workflow_dispatch:        # Allow manual trigger from GitHub UI
+
+jobs:
+  snapshot:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Run snapshot script
+        run: python scripts/snapshot_ownership.py
+
+      - name: Commit and push
+        run: |
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
+          git add exports/ownershipHistory.json
+          git diff --staged --quiet || git commit -m "Ownership snapshot $(date +'%Y-%m-%d')"
+          git push
