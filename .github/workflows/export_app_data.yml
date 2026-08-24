@@ -1,0 +1,70 @@
+name: Export App Data to SquadAI-native
+
+on:
+  workflow_run:
+    workflows: ["Data Import from Supabase"]
+    types: [completed]
+  workflow_dispatch:   # Manual trigger for testing
+
+jobs:
+  export:
+    # Only run if the data import succeeded (or triggered manually)
+    if: ${{ github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success' }}
+    runs-on: ubuntu-latest
+
+    steps:
+      # Check out FPL-Elo-Insights into a named subfolder so that
+      # Path(__file__).parent.parent.parent (REPO_ROOT) resolves to
+      # $GITHUB_WORKSPACE, giving the scripts the right sibling structure.
+      - name: Checkout FPL-Elo-Insights
+        uses: actions/checkout@v4
+        with:
+          path: FPL-Elo-Insights
+
+      # Check out the private SquadAI-native repo as a sibling folder.
+      # export_team_ratings.py writes directly here; the other scripts
+      # write to SquadAI/src/data/ and we copy them across below.
+      - name: Checkout SquadAI-native
+        uses: actions/checkout@v4
+        with:
+          repository: williamdee1/SquadAI-native
+          token: ${{ secrets.SQUADAI_PAT }}
+          path: SquadAI-native
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+
+      - name: Install dependencies
+        run: pip install polars numpy requests python-dotenv
+
+      - name: Run export scripts
+        run: |
+          cd FPL-Elo-Insights
+          python scripts/export_form_data.py
+          python scripts/export_fixture_data.py
+          python scripts/export_player_stats.py
+          python scripts/export_defcon_data.py
+          python scripts/export_xg_delta_data.py
+          python scripts/export_team_ratings.py
+
+      # Copy the 5 scripts that write to SquadAI/src/data/ into SquadAI-native/data/.
+      # export_team_ratings.py already writes directly to SquadAI-native/data/.
+      - name: Copy JSON files to SquadAI-native
+        run: |
+          mkdir -p SquadAI-native/data
+          cp SquadAI/src/data/formData.json         SquadAI-native/data/
+          cp SquadAI/src/data/fixtureData.json      SquadAI-native/data/
+          cp SquadAI/src/data/playerStatsData.json  SquadAI-native/data/
+          cp SquadAI/src/data/defconData.json       SquadAI-native/data/
+          cp SquadAI/src/data/xgDeltaData.json      SquadAI-native/data/
+
+      - name: Commit and push to SquadAI-native
+        run: |
+          cd SquadAI-native
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git config user.name "github-actions[bot]"
+          git add data/
+          git diff --staged --quiet || git commit -m "Auto-update app data $(date +'%Y-%m-%d %H:%M UTC')"
+          git push
