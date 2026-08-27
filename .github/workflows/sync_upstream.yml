@@ -1,0 +1,36 @@
+name: Sync Data from olbauday/FPL-Elo-Insights
+
+on:
+  schedule:
+    - cron: '0 9 * * *'   # Daily at 09:00 UTC — after olbauday's overnight update
+  workflow_dispatch:        # Manual trigger
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout fork
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Configure git
+        run: |
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git config user.name "github-actions[bot]"
+
+      - name: Fetch upstream data
+        run: |
+          git remote add upstream https://github.com/olbauday/FPL-Elo-Insights.git
+          git fetch upstream main
+
+      - name: Sync data/ folder only
+        # Checks out just the data/ directory from upstream — leaves all
+        # custom scripts, workflows, and configs completely untouched.
+        run: |
+          git checkout upstream/main -- data/
+          git diff --staged --quiet && echo "No data changes." || (
+            git commit -m "Sync data/ from olbauday $(date +'%Y-%m-%d')"
+            git push origin main
+          )

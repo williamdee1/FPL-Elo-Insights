@@ -2,13 +2,13 @@ name: Export App Data to SquadAI-native
 
 on:
   workflow_run:
-    workflows: ["Data Import from Supabase"]
+    workflows: ["Sync Data from olbauday/FPL-Elo-Insights", "Data Import from Supabase"]
     types: [completed]
   workflow_dispatch:   # Manual trigger for testing
 
 jobs:
   export:
-    # Only run if the data import succeeded (or triggered manually)
+    # Only run if the triggering workflow succeeded (or triggered manually)
     if: ${{ github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success' }}
     runs-on: ubuntu-latest
 
