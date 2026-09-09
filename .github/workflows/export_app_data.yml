@@ -40,25 +40,17 @@ jobs:
         run: pip install polars numpy requests python-dotenv
 
       - name: Run export scripts
+        # All scripts write directly to SquadAI-native/data/ via OUTPUT_PATH_NATIVE.
+        # Run from workspace root — scripts resolve paths via Path(__file__).parent chain.
+        # Do NOT cd into FPL-Elo-Insights: it's already checked out as a subfolder
+        # of the workspace, so paths resolve correctly from the workspace root.
         run: |
-          cd FPL-Elo-Insights
-          python scripts/export_form_data.py
-          python scripts/export_fixture_data.py
-          python scripts/export_player_stats.py
-          python scripts/export_defcon_data.py
-          python scripts/export_xg_delta_data.py
-          python scripts/export_team_ratings.py
-
-      # Copy the 5 scripts that write to SquadAI/src/data/ into SquadAI-native/data/.
-      # export_team_ratings.py already writes directly to SquadAI-native/data/.
-      - name: Copy JSON files to SquadAI-native
-        run: |
-          mkdir -p SquadAI-native/data
-          cp SquadAI/src/data/formData.json         SquadAI-native/data/
-          cp SquadAI/src/data/fixtureData.json      SquadAI-native/data/
-          cp SquadAI/src/data/playerStatsData.json  SquadAI-native/data/
-          cp SquadAI/src/data/defconData.json       SquadAI-native/data/
-          cp SquadAI/src/data/xgDeltaData.json      SquadAI-native/data/
+          python FPL-Elo-Insights/scripts/export_form_data.py
+          python FPL-Elo-Insights/scripts/export_fixture_data.py
+          python FPL-Elo-Insights/scripts/export_player_stats.py
+          python FPL-Elo-Insights/scripts/export_defcon_data.py
+          python FPL-Elo-Insights/scripts/export_xg_delta_data.py
+          python FPL-Elo-Insights/scripts/export_team_ratings.py
 
       - name: Commit and push to SquadAI-native
         run: |
