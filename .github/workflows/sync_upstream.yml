@@ -14,23 +14,29 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Configure git
         run: |
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git config user.name "github-actions[bot]"
 
-      - name: Fetch upstream data
+      - name: Fetch upstream
         run: |
           git remote add upstream https://github.com/olbauday/FPL-Elo-Insights.git
           git fetch upstream main
 
-      - name: Sync data/ folder only
-        # Checks out just the data/ directory from upstream — leaves all
-        # custom scripts, workflows, and configs completely untouched.
+      - name: Merge upstream — keep our scripts, take their data
+        # Merge upstream/main so we stay 0 commits behind.
+        # -X ours means: on any conflict, prefer our version (protects custom scripts,
+        # workflows, etc). Upstream's data/ changes come in cleanly because we don't
+        # have conflicting edits to those files.
         run: |
-          git checkout upstream/main -- data/
-          git diff --staged --quiet && echo "No data changes." || (
-            git commit -m "Sync data/ from olbauday $(date +'%Y-%m-%d')"
-            git push origin main
-          )
+          git merge upstream/main -X ours --no-edit -m "Sync from olbauday $(date +'%Y-%m-%d')" || {
+            # If merge still fails (e.g. unrelated histories), fall back to data-only sync
+            git merge --abort 2>/dev/null || true
+            git checkout upstream/main -- data/
+            git diff --staged --quiet && echo "No data changes." || \
+              git commit -m "Sync data/ from olbauday $(date +'%Y-%m-%d') [fallback]"
+          }
+          git push origin main
