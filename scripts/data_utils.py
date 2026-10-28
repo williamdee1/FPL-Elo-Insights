@@ -8,8 +8,31 @@ Player IDs are FPL IDs (same as the FotMob IDs in players.csv / playermatchstats
 """
 
 import csv
+import math
 from pathlib import Path
 from collections import defaultdict
+from functools import lru_cache
+
+
+def defcon_samples(gw_start: int, gw_end: int, data_base: Path) -> dict:
+    """Observed league appearances only; absent per-match contribution is missing."""
+    samples = defaultdict(list)
+    for gw in range(gw_start, gw_end + 1):
+        path = data_base / 'By Gameweek' / f'GW{gw}' / 'playermatchstats.csv'
+        if not path.exists():
+            continue
+        league = prem_match_ids(gw, data_base)
+        with path.open(encoding='utf-8-sig') as stream:
+            for row in csv.DictReader(stream):
+                if row.get('match_id') not in league or _float(row.get('minutes_played')) <= 0:
+                    continue
+                raw = row.get('defensive_contributions')
+                if raw is None or raw == '':
+                    continue
+                value = float(raw)
+                if math.isfinite(value) and value >= 0:
+                    samples[row['player_id']].append(value)
+    return dict(samples)
 
 # ── Position helpers ──────────────────────────────────────────────────────────
 
@@ -70,6 +93,7 @@ def _float(val) -> float:
         return 0.0
 
 
+@lru_cache(maxsize=152)
 def load_gw_player_stats(gw: int, data_base: Path) -> dict:
     """
     Return {player_id_str: dict_of_floats} for all players who appeared in GW{gw}.
@@ -86,14 +110,45 @@ def load_gw_player_stats(gw: int, data_base: Path) -> dict:
     return result
 
 
+@lru_cache(maxsize=152)
+def prem_match_ids(gw: int, data_base: Path) -> set[str]:
+    """Identify league fixtures from the same GW snapshot as the player rows.
+
+    Both tournament aliases are emitted by supported source data. Never infer
+    competition from the player, team, or match-id text. Missing classification
+    must stop an export rather than publish cup-inclusive or all-zero figures.
+    """
+    path = data_base / "By Gameweek" / f"GW{gw}" / "matches.csv"
+    competitions = {}
+    with open(path, encoding="utf-8-sig", errors="strict") as f:
+        reader = csv.DictReader(f)
+        if not {"match_id", "tournament"}.issubset(reader.fieldnames or []):
+            raise ValueError(f"Missing match_id/tournament columns: {path}")
+        for row in reader:
+            match_id = (row.get("match_id") or "").strip()
+            tournament = (row.get("tournament") or "").strip().lower()
+            if not match_id or not tournament:
+                raise ValueError(f"Missing fixture identity or competition: {path}")
+            competition = "prem" if tournament in {"prem", "premier-league"} else tournament
+            if match_id in competitions and competitions[match_id] != competition:
+                raise ValueError(f"Conflicting competition for {match_id}: {path}")
+            competitions[match_id] = competition
+    return {match_id for match_id, competition in competitions.items() if competition == "prem"}
+
+
+@lru_cache(maxsize=152)
 def load_gw_matchstats(gw: int, data_base: Path) -> dict:
     """
     Return {player_id_str: {xg, xa, total_shots, tib, key_passes, ...}} for GW{gw}.
-    Sums across multiple matches (DGWs). Returns empty dict if file missing.
+    Sums Premier League matches only, retaining both matches in a DGW.
+    Returns empty dict if player statistics are missing. If they exist, fixture
+    classification is required; its absence must not masquerade as zero stats.
     """
     path = data_base / "By Gameweek" / f"GW{gw}" / "playermatchstats.csv"
     if not path.exists():
         return {}
+
+    league_ids = prem_match_ids(gw, data_base)
 
     SUM_COLS = [
         "minutes_played", "goals", "assists",
@@ -103,8 +158,14 @@ def load_gw_matchstats(gw: int, data_base: Path) -> dict:
     ]
     accum: dict = defaultdict(lambda: {c: 0.0 for c in SUM_COLS})
     with open(path, encoding="utf-8", errors="replace") as f:
-        for row in csv.DictReader(f):
+        reader = csv.DictReader(f)
+        if not {"player_id", "match_id"}.issubset(reader.fieldnames or []):
+            raise ValueError(f"Missing player_id/match_id columns: {path}")
+        for row in reader:
+            if (row.get("match_id") or "").strip() not in league_ids:
+                continue
             pid = row["player_id"]
+            accum[pid]["appearances"] = accum[pid].get("appearances", 0) + int(_float(row.get("minutes_played")) > 0)
             for col in SUM_COLS:
                 accum[pid][col] += _float(row.get(col))
     return dict(accum)
@@ -148,6 +209,9 @@ def accumulate_player_stats(
         "key_passes": 0.0,
         # track GW-by-GW event_points for sparkline
         "points_history": [],
+        "points_by_gameweek": {},
+        "gameweeksObserved": 0,
+        "matchesPlayed": 0,
     })
 
     for gw in range(gw_start, gw_end + 1):
@@ -164,11 +228,14 @@ def accumulate_player_stats(
             t["saves_total"]               += _float(row.get("saves"))
             t["bonus"]                     += _float(row.get("bonus"))
             t["expected_goals_conceded"]   += _float(row.get("expected_goals_conceded"))
-            t["clearances_blocks_interceptions"] += _float(row.get("clearances_blocks_interceptions"))
+            t["clearances_blocks_interceptions"] += _float(row.get("defensive_contribution"))
             ep = _float(row.get("event_points"))
             t["event_points"]              += ep
             t["games"]                     += 1
+            t["gameweeksObserved"] += 1
+            t["matchesPlayed"] += int(gw_matches.get(pid, {}).get("appearances", 0))
             t["points_history"].append(ep)
+            t["points_by_gameweek"][gw] = ep
 
             # Merge matchstats if available
             ms = gw_matches.get(pid)
@@ -180,6 +247,8 @@ def accumulate_player_stats(
                 t["tib"]             += ms.get("touches_opposition_box", 0.0)
                 t["key_passes"]      += ms.get("chances_created", 0.0)
 
+    for value in totals.values():
+        value["points_history"] = [value["points_by_gameweek"].get(gw, 0.0) for gw in range(gw_start, gw_end + 1)]
     return dict(totals)
 
 
@@ -196,12 +265,13 @@ def compute_player_stat_record(totals: dict) -> dict:
     xgc    = totals["expected_goals_conceded"]
 
     return {
-        "xgi":         round((totals["xg"] + totals["xa"]) / games, 3),
-        "shots":       round(totals["total_shots"] / games, 2),
-        "tib":         round(totals["tib"] / games, 2),
-        "key_passes":  round(totals["key_passes"] / games, 2),
+        "pts_per_game": round(totals["event_points"] / games, 2),
+        "xgi":         round((totals["xg"] + totals["xa"]) / minutes * 90, 3),
+        "shots":       round(totals["total_shots"] / minutes * 90, 2),
+        "tib":         round(totals["tib"] / minutes * 90, 2),
+        "key_passes":  round(totals["key_passes"] / minutes * 90, 2),
         # Goals prevented per game: xGC - actual goals conceded
-        "g_prev":      round((xgc - gc) / games, 4),
+        "g_prev":      round((xgc - gc) / minutes * 90, 4),
         "defcon":      round(totals["clearances_blocks_interceptions"], 1),
         "saves":       round(saves, 1),
         "goals_conceded": round(gc, 1),
@@ -211,4 +281,6 @@ def compute_player_stat_record(totals: dict) -> dict:
         "xcg_per90":   round(xgc / minutes * 90, 3),
         "minutes":     round(totals["minutes"], 1),
         "games":       totals["games"],
+        "gameweeksObserved": totals.get("gameweeksObserved", totals["games"]),
+        "matchesPlayed": totals.get("matchesPlayed", 0),
     }

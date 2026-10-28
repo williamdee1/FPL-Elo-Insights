@@ -147,7 +147,7 @@ def main():
 
     print(f"Loading 2026-27 current GW{CURRENT_GW_START}–GW{CURRENT_GW_END} ...")
     current_ratings = load_team_ratings(
-        CURRENT_GW_START, CURRENT_GW_END, CURRENT_GW_START,
+        CURRENT_GW_START, CURRENT_GW_END, CURRENT_GW_END + 1,
         base=DATA_26_27,
     )
 

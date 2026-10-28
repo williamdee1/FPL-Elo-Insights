@@ -65,12 +65,12 @@ def _build_form_players(gw_end, recent_gws, comparison_gws, data_base, meta):
         if not m or m["position"] not in pos_players:
             continue
 
-        recent_avg = r_tot["event_points"] / r_tot["games"]
+        recent_avg = r_tot["event_points"] / (gw_end - recent_start + 1)
 
         e_tot = earlier_totals.get(pid)
         if not e_tot or e_tot["games"] == 0:
             continue
-        earlier_avg = e_tot["event_points"] / e_tot["games"]
+        earlier_avg = e_tot["event_points"] / (comparison_end - comparison_start + 1)
 
         if earlier_avg == 0:
             trend_pct = 100.0 if recent_avg > 0 else 0.0
@@ -86,6 +86,9 @@ def _build_form_players(gw_end, recent_gws, comparison_gws, data_base, meta):
             "team":       m["team"],
             "price":      m["price"],
             "ownership":  m["ownership"],
+            "recentAppearances": r_tot["matchesPlayed"],
+            "recentActiveGameweeks": r_tot["gameweeksObserved"],
+            "recentWindowGws": gw_end - recent_start + 1,
             "recentAvg":  round(recent_avg, 2),
             "earlierAvg": round(earlier_avg, 2),
             "trendPct":   round(trend_pct, 1),

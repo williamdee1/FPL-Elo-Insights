@@ -17,7 +17,7 @@ from pathlib import Path
 SCRIPTS_DIR = Path(__file__).parent
 sys.path.insert(0, str(SCRIPTS_DIR))
 
-from data_utils import load_player_meta, accumulate_player_stats
+from data_utils import load_player_meta, accumulate_player_stats, defcon_samples
 
 REPO_ROOT   = Path(__file__).parent.parent.parent
 DATA_26_27  = REPO_ROOT / "FPL-Elo-Insights" / "data" / "2026-2027"
@@ -41,6 +41,7 @@ def main():
     season_totals = accumulate_player_stats(1, LAST_COMPLETE_GW, DATA_26_27)
     # Recent window
     recent_totals = accumulate_player_stats(recent_start, LAST_COMPLETE_GW, DATA_26_27)
+    samples = defcon_samples(recent_start, LAST_COMPLETE_GW, DATA_26_27)
 
     results: dict = {"DEF": [], "MID": []}
 
@@ -51,7 +52,11 @@ def main():
         if not m or m["position"] not in ("DEF", "MID"):
             continue
 
-        recent_per_game = r_tot["clearances_blocks_interceptions"] / r_tot["games"]
+        observed = samples.get(pid, [])
+        appearances = r_tot.get('matchesPlayed', 0)
+        if not appearances:
+            continue
+        recent_per_game = sum(observed) / len(observed) if observed else r_tot["clearances_blocks_interceptions"] / appearances
 
         s_tot = season_totals.get(pid)
         season_per_90 = 0.0
@@ -60,9 +65,7 @@ def main():
 
         # Consistency: % of recent games where DefCon/game ≥ threshold
         threshold = DEF_THRESHOLD if m["position"] == "DEF" else MID_THRESHOLD
-        # We don't have per-GW breakdown here; approximate from per-game average
-        # (exact consistency would require per-GW per-player records)
-        consistency = min(100.0, (recent_per_game / threshold) * 100) if threshold > 0 else 0.0
+        consistency = sum(value >= threshold for value in observed) / len(observed) * 100 if observed else None
 
         results[m["position"]].append({
             "id":              int(pid),
@@ -72,8 +75,9 @@ def main():
             "ownership":       m["ownership"],
             "recentPerGame":   round(recent_per_game, 1),
             "seasonPer90":     round(season_per_90, 1),
-            "consistencyPct":  round(consistency, 1),
-            "recentGames":     r_tot["games"],
+            "consistencyPct":  round(consistency, 1) if consistency is not None else None,
+            "consistencySample": len(observed),
+            "recentGames":     len(observed) if observed else appearances,
             "threshold":       threshold,
         })
 

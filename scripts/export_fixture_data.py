@@ -49,7 +49,7 @@ PRIOR_CUTOFF   = 37
 
 # 2026-27 current season for ratings blend
 CURRENT_GW_START = 1
-CURRENT_GW_END   = 2     # update each week alongside other export scripts
+CURRENT_GW_END   = 4     # update each week alongside other export scripts
 
 PRIOR_WEIGHT   = 1.0
 CURRENT_WEIGHT = 3.0     # each current-season game counts 3× vs prior
@@ -57,70 +57,8 @@ CURRENT_WEIGHT = 3.0     # each current-season game counts 3× vs prior
 
 # ── Blended ratings (mirrors export_team_ratings.py) ─────────────────────────
 
-def _blend_ratings(prior_ratings, current_ratings):
-    blank = lambda: {k: 0.0 for k in [
-        "xg_h","xga_h","bc_h","bcc_h","sot_h","sotc_h","gc_h","tib_h","n_h",
-        "xg_a","xga_a","bc_a","bcc_a","sot_a","sotc_a","gc_a","tib_a","n_a",
-    ]}
-    merged = defaultdict(blank)
+from export_team_ratings import blend_ratings as _blend_ratings
 
-    for ratings, w in [(prior_ratings, PRIOR_WEIGHT), (current_ratings, CURRENT_WEIGHT)]:
-        for code, r in ratings.items():
-            s = merged[code]
-            n_h = r.get("n_home", 0)
-            if n_h > 0:
-                ww = n_h * w
-                for src, dst in [("xg_home","xg_h"),("xga_home","xga_h"),("bc_home","bc_h"),
-                                  ("bcc_home","bcc_h"),("sot_home","sot_h"),("sotc_home","sotc_h"),
-                                  ("gc_home","gc_h"),("tib_home","tib_h")]:
-                    s[dst] += r[src] * ww
-                s["n_h"] += ww
-            n_a = r.get("n_away", 0)
-            if n_a > 0:
-                ww = n_a * w
-                for src, dst in [("xg_away","xg_a"),("xga_away","xga_a"),("bc_away","bc_a"),
-                                  ("bcc_away","bcc_a"),("sot_away","sot_a"),("sotc_away","sotc_a"),
-                                  ("gc_away","gc_a"),("tib_away","tib_a")]:
-                    s[dst] += r[src] * ww
-                s["n_a"] += ww
-
-    def pg(s, key, n_key):
-        n = s[n_key]
-        return s[key] / n if n > 0 else 0.0
-
-    blended = {}
-    for code, s in merged.items():
-        blended[code] = {
-            "xg_home":   pg(s,"xg_h","n_h"),   "xg_away":   pg(s,"xg_a","n_a"),
-            "xga_home":  pg(s,"xga_h","n_h"),  "xga_away":  pg(s,"xga_a","n_a"),
-            "bc_home":   pg(s,"bc_h","n_h"),    "bc_away":   pg(s,"bc_a","n_a"),
-            "bcc_home":  pg(s,"bcc_h","n_h"),   "bcc_away":  pg(s,"bcc_a","n_a"),
-            "sot_home":  pg(s,"sot_h","n_h"),   "sot_away":  pg(s,"sot_a","n_a"),
-            "sotc_home": pg(s,"sotc_h","n_h"),  "sotc_away": pg(s,"sotc_a","n_a"),
-            "gc_home":   pg(s,"gc_h","n_h"),    "gc_away":   pg(s,"gc_a","n_a"),
-            "tib_home":  pg(s,"tib_h","n_h"),   "tib_away":  pg(s,"tib_a","n_a"),
-            "n_home":    s["n_h"],               "n_away":    s["n_a"],
-        }
-
-    atk_h = [atk_raw(r,"home") for r in blended.values()]
-    atk_a = [atk_raw(r,"away") for r in blended.values()]
-    def_h = [def_raw(r,"home") for r in blended.values()]
-    def_a = [def_raw(r,"away") for r in blended.values()]
-
-    def norm(val, vals, lo=1.0, hi=10.0):
-        mn, mx = min(vals), max(vals)
-        return 5.0 if mx == mn else lo + (val - mn) / (mx - mn) * (hi - lo)
-
-    for code, r in blended.items():
-        r["atk_home_score"] = norm(atk_raw(r,"home"), atk_h)
-        r["atk_away_score"] = norm(atk_raw(r,"away"), atk_a)
-        r["def_home_score"] = norm(def_raw(r,"home"), def_h, lo=10.0, hi=1.0)
-        r["def_away_score"] = norm(def_raw(r,"away"), def_a, lo=10.0, hi=1.0)
-
-    return blended
-
-
-# ── FPL API: detect the next gameweek ────────────────────────────────────────
 
 def get_next_gw() -> int:
     """Return the next GW from FPL bootstrap-static. Falls back to CURRENT_GW_END+1."""
@@ -135,10 +73,10 @@ def get_next_gw() -> int:
             return next_gw
         current_gw = next((e["id"] for e in events if e.get("is_current")), None)
         if current_gw:
-            return current_gw + 1
+            return min(38, current_gw + 1)
     except Exception as exc:
         print(f"  Warning: FPL API unavailable ({exc}), falling back to GW{CURRENT_GW_END + 1}")
-    return CURRENT_GW_END + 1
+    return min(38, CURRENT_GW_END + 1)
 
 
 # ── Fixture builder ───────────────────────────────────────────────────────────
@@ -167,7 +105,7 @@ def build_entry(team_code, metric, schedule, planning_gws, code_to_short):
 
 def main():
     next_gw = get_next_gw()
-    planning_gws = list(range(next_gw, next_gw + PLANNING_GWS_COUNT))
+    planning_gws = list(range(next_gw, min(39, next_gw + PLANNING_GWS_COUNT)))
     print(f"Planning GWs: {planning_gws}")
 
     # ── Blended ratings ───────────────────────────────────────────────────────
@@ -175,7 +113,7 @@ def main():
     prior_ratings = load_team_ratings(PRIOR_GW_START, PRIOR_GW_END, PRIOR_CUTOFF, base=DATA_25_26)
 
     print(f"Loading 2026-27 current ratings GW{CURRENT_GW_START}–GW{CURRENT_GW_END} ...")
-    current_ratings = load_team_ratings(CURRENT_GW_START, CURRENT_GW_END, CURRENT_GW_START, base=DATA_26_27)
+    current_ratings = load_team_ratings(CURRENT_GW_START, CURRENT_GW_END, CURRENT_GW_END + 1, base=DATA_26_27)
 
     print("Blending seasons ...")
     ratings = _blend_ratings(prior_ratings, current_ratings)
@@ -210,7 +148,7 @@ def main():
 
     for path in (OUTPUT_PATH, OUTPUT_PATH_NATIVE):
         path.parent.mkdir(parents=True, exist_ok=True)
-        with open(path, "w", encoding="utf-8") as f:
+        with open(path, "w", encoding="utf-8", newline="\n") as f:
             json.dump(output, f, indent=2)
         print(f"Saved -> {path}")
 
