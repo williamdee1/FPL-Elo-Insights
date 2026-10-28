@@ -1,0 +1,69 @@
+name: Publish predictions and insights (GitHub Pages)
+# Serves https://williamdee1.github.io/FPL-Elo-Insights
+#   app: EXPO_PUBLIC_PREDICTIONS_URL = <site>/predictions; EXPO_PUBLIC_INSIGHTS_URL = <site> once the insight release is on main
+#   manifest.json, releases/<releaseId>/*.json   insight release (build_app_release.py)
+#   predictions/mlPredictionsData.json             player xP, next 6 GWs (fplmodel)
+#   predictions/matchForecastData.json             per-fixture xG and clean-sheet %
+#   predictions/modelCard.json                     rolling backtest vs FPL ep_next
+# Predictions expire in the app after 7 days and at each deadline, so this runs
+# after every data import and on a schedule.
+on:
+  workflow_run:
+    workflows: ["Data Import from Supabase"]
+    types: [completed]
+  schedule:
+    - cron: "15 */6 * * *"
+  workflow_dispatch:
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+concurrency:
+  group: app-data-publication
+  cancel-in-progress: false
+jobs:
+  build:
+    if: ${{ github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 1
+      - uses: conda-incubator/setup-miniconda@v3
+        with:
+          activate-environment: fpl
+          python-version: '3.10'
+          auto-activate-base: false
+      - name: Test, build insight release, run models
+        shell: bash -el {0}
+        env:
+          SEASON: ${{ vars.FPL_SEASON }}
+        run: |
+          set -euo pipefail
+          conda run -n fpl pip install -r requirements-app.txt
+          conda run -n fpl python -m unittest discover -s scripts/tests
+          # Keep the existing public pages (privacy policy, account deletion) at their URLs.
+          mkdir -p site && cp -r docs/. site/
+          # Insight release (manifest.json + releases/) once build_app_release.py is on main.
+          if [ -f scripts/build_app_release.py ]; then
+            test -n "$SEASON" || { echo "Configure repository variable FPL_SEASON, e.g. 2026-2027"; exit 1; }
+            conda run -n fpl python scripts/build_app_release.py --season "$SEASON" --source "data/$SEASON" \
+              --output site --source-revision "$(git rev-parse HEAD)"
+          fi
+          # --evaluate reruns the rolling-origin backtest (~2 min) and writes modelCard.json
+          cd scripts && conda run -n fpl python -m fplmodel run --out ../site/predictions --evaluate
+          cd .. && touch site/.nojekyll && ls -R site | head -40
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

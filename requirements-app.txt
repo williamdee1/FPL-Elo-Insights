@@ -1,0 +1,11 @@
+# Export/contract environment, including the production fplmodel package.
+polars==1.32.2
+numpy==2.2.6
+requests==2.32.5
+pandas==2.3.1
+scikit-learn==1.7.1
+scipy==1.15.3
+lightgbm==4.6.0
+xgboost==3.0.3
+supabase>=2.0,<3.0
+python-dotenv>=1.0,<2.0
