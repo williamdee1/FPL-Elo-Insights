@@ -9,7 +9,7 @@ name: Publish predictions and insights (GitHub Pages)
 # after every data import and on a schedule.
 on:
   workflow_run:
-    workflows: ["Data Import from Supabase"]
+    workflows: ["Sync Data from olbauday/FPL-Elo-Insights", "Data Import from Supabase"]
     types: [completed]
   schedule:
     - cron: "15 */6 * * *"
