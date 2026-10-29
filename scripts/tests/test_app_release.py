@@ -6,7 +6,7 @@ from unittest.mock import patch
 from types import SimpleNamespace
 from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-from build_app_release import source_cutoff, validate_outputs, build_release, player_codes, recorded_snapshot
+from build_app_release import source_cutoff, validate_outputs, build_release, player_codes, recorded_snapshot, release_identity, place_release
 
 
 class ReleaseTests(unittest.TestCase):
@@ -82,3 +82,26 @@ class ReleaseTests(unittest.TestCase):
                 + '1,2026-08-21T17:30:00+00:00,2026-08-25T09:00:00+00:00\n'
                 + '2,2026-08-28T17:30:00Z,2026-09-01T09:00:00Z\n')
             self.assertEqual(recorded_snapshot(base, 2), '2026-09-01T09:00:00+00:00')
+
+    def test_release_id_depends_only_on_content(self):
+        files = {'formData': {'sha256': 'a' * 64, 'bytes': 10}}
+        first = release_identity('2026-2027', 8, files, {'1': 100})
+        self.assertEqual(first, release_identity('2026-2027', 8, dict(files), {'1': 100}))
+        self.assertRegex(first, r'^2026-2027-gw8-[0-9a-f]{16}$')
+        self.assertNotEqual(first, release_identity('2026-2027', 8, {'formData': {'sha256': 'b' * 64, 'bytes': 10}}, {'1': 100}))
+        self.assertNotEqual(first, release_identity('2026-2027', 8, files, {'1': 101}))
+
+    def test_rebuilding_an_unchanged_release_is_a_no_op_but_changed_content_is_refused(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            base = Path(temporary)
+            staged = base / 'staged'; staged.mkdir()
+            (staged / 'formData.json').write_text('{"a":1}'); (staged / 'manifest.json').write_text('first')
+            target = base / 'releases' / 'r1'
+            place_release(staged, target)
+            (staged / 'manifest.json').write_text('regenerated timestamp')
+            place_release(staged, target)
+            self.assertEqual((target / 'manifest.json').read_text(), 'first')
+            (staged / 'formData.json').write_text('{"a":2}')
+            with self.assertRaises(FileExistsError):
+                place_release(staged, target)
+

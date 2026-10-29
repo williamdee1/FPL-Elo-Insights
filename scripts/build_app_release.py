@@ -84,6 +84,21 @@ def validate_outputs(payloads: dict, cutoff: int):
         raise ValueError('Unsupported fixture gameweek')
 
 
+def release_identity(season: str, cutoff: int, files: dict, codes: dict) -> str:
+    digest = hashlib.sha256(json.dumps({'files': files, 'playerCodes': codes}, sort_keys=True).encode('utf-8')).hexdigest()
+    return f'{season}-gw{cutoff}-{digest[:16]}'
+
+
+def place_release(staged: Path, target: Path):
+    """Copy a staged release; an existing one with the same id must hold identical payloads."""
+    if target.exists():
+        payloads = [f for f in staged.iterdir() if f.name != 'manifest.json']
+        if any(not (target / f.name).exists() or (target / f.name).read_bytes() != f.read_bytes() for f in payloads):
+            raise FileExistsError('Immutable release already exists with different content')
+        return
+    shutil.copytree(staged, target)
+
+
 def build_release(base: Path, season: str, cutoff: int, output: Path, revision: str, bundle: Path | None = None):
     if not re.fullmatch(r'\d{4}-\d{4}', season) or not 1 <= cutoff <= 38 or not revision:
         raise ValueError('Explicit season, cutoff and source revision are required')
@@ -91,8 +106,6 @@ def build_release(base: Path, season: str, cutoff: int, output: Path, revision: 
     if cutoff > available:
         raise ValueError(f'Requested GW{cutoff}; contiguous source coverage stops at GW{available}')
     output.mkdir(parents=True, exist_ok=True)
-    stamp = datetime.now(timezone.utc).strftime('%Y%m%dT%H%M%SZ')
-    release_id = f'{season}-gw{cutoff}-{revision[:12]}-{stamp}'
     with tempfile.TemporaryDirectory(dir=output, prefix='staging-') as temporary:
         staged = Path(temporary)
         payloads = {}
@@ -119,20 +132,23 @@ def build_release(base: Path, season: str, cutoff: int, output: Path, revision: 
         # but only if it postdates the cutoff deadline (upstream has shipped a constant
         # pre-season placeholder for every gameweek).
         source_time = recorded_snapshot(base, cutoff) or source_time
-        manifest = {'schemaVersion': 1, 'releaseId': release_id, 'season': season,
-                    'generatedAt': datetime.now(timezone.utc).isoformat(), 'sourceUpdatedAt': source_time,
-                    'completeThroughGw': cutoff, 'sourceRevision': revision, 'playerCodes': codes, 'files': {}}
+        files = {}
         for name, payload in payloads.items():
             payload.update({'seasonKey': season, 'sourceThroughGw': cutoff, 'sourceUpdatedAt': source_time})
             raw = json.dumps(payload, ensure_ascii=True, allow_nan=False, separators=(',', ':')).encode('ascii')
             (staged / f'{name}.json').write_bytes(raw)
-            manifest['files'][name] = {'sha256': hashlib.sha256(raw).hexdigest(), 'bytes': len(raw)}
+            files[name] = {'sha256': hashlib.sha256(raw).hexdigest(), 'bytes': len(raw)}
+        # Content-addressed: an unchanged release keeps its id across scheduled
+        # rebuilds, so apps skip the download and never chase a release that a
+        # newer Pages deploy has already replaced.
+        release_id = release_identity(season, cutoff, files, codes)
+        manifest = {'schemaVersion': 1, 'releaseId': release_id, 'season': season,
+                    'generatedAt': datetime.now(timezone.utc).isoformat(), 'sourceUpdatedAt': source_time,
+                    'completeThroughGw': cutoff, 'sourceRevision': revision, 'playerCodes': codes, 'files': files}
         (staged / 'manifest.json').write_text(json.dumps(manifest, indent=2), encoding='utf-8')
         target = output / 'releases' / release_id
         target.parent.mkdir(parents=True, exist_ok=True)
-        if target.exists():
-            raise FileExistsError('Immutable release already exists')
-        shutil.copytree(staged, target)
+        place_release(staged, target)
         if bundle:
             bundle.mkdir(parents=True, exist_ok=True)
             for name in EXPORTS:

@@ -59,7 +59,8 @@ def main():
     recent_out     = {}
     form_out       = {}
 
-    all_pids = set(season_totals) | set(recent_totals) | set(form_totals)
+    # Sorted so the export (and the content-addressed release id) is deterministic.
+    all_pids = sorted(set(season_totals) | set(recent_totals) | set(form_totals))
     for pid in all_pids:
         if pid not in meta:
             continue  # skip players with no metadata
