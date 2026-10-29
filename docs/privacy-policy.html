@@ -24,7 +24,7 @@
 <body>
 
   <h1>SquadAI — Privacy Policy</h1>
-  <p class="updated">Last updated: 30 July 2026</p>
+  <p class="updated">Last updated: 29 October 2026</p>
 
   <p>
     SquadAI is a Fantasy Premier League companion app. This policy explains what
@@ -34,15 +34,28 @@
   <h2>1. Information We Collect</h2>
   <ul>
     <li>
-      <strong>Google account name and email address</strong> — collected when you
-      sign in with Google. Used only to identify you within the app and personalise
-      your experience. This information is not stored on any server operated by
-      SquadAI.
+      <strong>Sign-in details</strong> — your name and email address from Google, or
+      the identifier (and, the first time, name and email) Apple provides when you
+      sign in with Apple. Used to identify you within the app. Your name and email
+      are kept on your device and are not sent to any server operated by SquadAI.
     </li>
     <li>
       <strong>FPL Team ID</strong> — a numeric ID you optionally enter to link your
-      Fantasy Premier League team. Stored locally on your device only (never
-      transmitted to SquadAI servers).
+      Fantasy Premier League team. Stored locally on your device.
+    </li>
+    <li>
+      <strong>Purchase records</strong> — if you buy an Advisor pass, a record of
+      the purchase (product, date and store transaction) is held by our payment
+      provider, RevenueCat, against an account identifier derived from your sign-in
+      (your Google or Apple account ID, not your email address). This is how a pass
+      follows your login across devices.
+    </li>
+    <li>
+      <strong>Crash reports</strong> — if the app crashes or hits an error, a
+      diagnostic report (error details, app version, device model, operating
+      system and the app's recent screens and network requests) is sent to Sentry
+      so the problem can be fixed. Crash reports do not include your name or email,
+      and current versions of the app remove FPL Team and league IDs from them.
     </li>
   </ul>
 
@@ -50,9 +63,9 @@
   <p>SquadAI does not collect, store, or transmit:</p>
   <ul>
     <li>Location data</li>
-    <li>Device identifiers or advertising IDs</li>
-    <li>Usage analytics or crash reports</li>
-    <li>Any financial information</li>
+    <li>Advertising IDs, and no advertising or tracking SDKs are used</li>
+    <li>Payment card or bank details — payments are handled entirely by Google Play
+      or the Apple App Store; SquadAI never sees them</li>
   </ul>
 
   <h2>3. Third-Party Services</h2>
@@ -62,34 +75,57 @@
       <strong>Fantasy Premier League API</strong>
       (<a href="https://fantasy.premierleague.com">fantasy.premierleague.com</a>) —
       a public API operated by the Premier League. Used to retrieve player data,
-      fixtures, and your squad. No credentials are sent; the API requires no
-      authentication for the data SquadAI accesses.
+      fixtures, and your squad. No credentials are sent.
     </li>
     <li>
-      <strong>Google Sign-In</strong> — authentication is handled entirely by Google.
-      SquadAI receives only your name and email address from Google upon successful
-      sign-in. Google's privacy policy applies:
-      <a href="https://policies.google.com/privacy">policies.google.com/privacy</a>.
+      <strong>Google Sign-In / Sign in with Apple</strong> — authentication is
+      handled by Google or Apple. Their privacy policies apply:
+      <a href="https://policies.google.com/privacy">policies.google.com/privacy</a>,
+      <a href="https://www.apple.com/legal/privacy/">apple.com/legal/privacy</a>.
     </li>
     <li>
-      <strong>GitHub (raw content)</strong> — the app fetches publicly hosted
-      statistical data files from GitHub. No personal information is sent in these
-      requests.
+      <strong>Google Play Billing / Apple App Store</strong> — process payments for
+      Advisor passes under their own terms and privacy policies.
+    </li>
+    <li>
+      <strong>RevenueCat</strong> — verifies store purchases and stores the purchase
+      records described above. Privacy policy:
+      <a href="https://www.revenuecat.com/privacy">revenuecat.com/privacy</a>.
+    </li>
+    <li>
+      <strong>Sentry</strong> — receives crash reports. Privacy policy:
+      <a href="https://sentry.io/privacy/">sentry.io/privacy</a>.
+    </li>
+    <li>
+      <strong>GitHub Pages</strong> — the app downloads publicly hosted statistics,
+      predictions and the free-access list from GitHub. No personal information is
+      sent in these requests; whether your account has free access is checked on
+      your device.
     </li>
   </ul>
 
-  <h2>4. Data Storage</h2>
+  <h2>4. Data Storage and Retention</h2>
   <p>
-    All data stored by SquadAI (your Google profile and FPL Team ID) is kept
-    locally on your device using standard platform storage (AsyncStorage). It is
-    not backed up to any SquadAI server. You can clear this data at any time by
-    signing out of the app or clearing the app's storage in your device settings.
+    Your sign-in details, FPL Team ID and saved plans are kept locally on your
+    device (AsyncStorage). You can clear them at any time by signing out or
+    clearing the app's storage in your device settings. Purchase records are kept
+    by RevenueCat for as long as needed to provide your passes and meet tax and
+    accounting obligations. Crash reports are retained by Sentry for a limited
+    period and then deleted.
   </p>
 
   <h2>5. Data Sharing</h2>
   <p>
-    SquadAI does not sell, rent, or share your personal information with any third
-    party for marketing or commercial purposes.
+    SquadAI does not sell or rent your personal information, and does not share it
+    with any third party for marketing or advertising. Data is shared only with the
+    service providers listed above, for the purposes described.
+  </p>
+
+  <h2>Your Rights</h2>
+  <p>
+    You can ask us to delete your purchase records or crash reports, or for a copy
+    of the data held about you, by emailing the address below. See also
+    <a href="delete-account.html">Delete Account &amp; Data</a>.
   </p>
 
   <h2>6. Children's Privacy</h2>
