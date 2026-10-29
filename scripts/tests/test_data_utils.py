@@ -6,7 +6,7 @@ import unittest
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-from data_utils import accumulate_player_stats, load_gw_matchstats, prem_match_ids, defcon_samples
+from data_utils import accumulate_player_stats, compute_player_stat_record, load_gw_matchstats, prem_match_ids, defcon_samples
 
 
 class LeagueMatchStatsTests(unittest.TestCase):
@@ -38,12 +38,23 @@ class LeagueMatchStatsTests(unittest.TestCase):
     def test_both_supported_league_aliases(self):
         self.assertEqual(prem_match_ids(2, self.base), {"league-a", "league-b"})
 
-    def test_consistency_samples_keep_doubles_and_exclude_cups_and_missing_values(self):
-        self.write('playermatchstats.csv', ['player_id', 'match_id', 'minutes_played', 'defensive_contributions'], [
-            ['1', 'league-a', 90, 12], ['1', 'league-b', 60, 3], ['1', 'cup', 90, 20],
-            ['2', 'league-a', 0, 0], ['3', 'league-a', 90, ''],
+    def test_defcon_samples_use_official_gameweek_values_and_count_league_matches(self):
+        self.write('playermatchstats.csv', ['player_id', 'match_id', 'minutes_played'], [
+            ['1', 'league-a', 90], ['1', 'league-b', 60], ['1', 'cup', 90],
+            ['4', 'cup', 90], ['4', 'league-a', 0],
         ])
-        self.assertEqual(defcon_samples(2, 2, self.base), {'1': [12, 3]})
+        self.write('player_gameweek_stats.csv', ['id', 'minutes', 'defensive_contribution'], [
+            ['1', 150, 15], ['2', 0, 0], ['3', 90, ''], ['4', 90, 11], ['5', 90, 9],
+        ])
+        # 1: double gameweek (cup excluded); 2: did not play; 3: missing value;
+        # 4/5: one match even when the match-level source misses the league row.
+        self.assertEqual(defcon_samples(2, 2, self.base), {'1': [(15.0, 2)], '4': [(11.0, 1)], '5': [(9.0, 1)]})
+
+    def test_stat_record_defcon_is_per_appearance(self):
+        self.write("player_gameweek_stats.csv", ["id", "minutes", "defensive_contribution"], [["1", 150, 15]])
+        totals = accumulate_player_stats(2, 2, self.base)["1"]
+        totals["games"] = 3
+        self.assertEqual(compute_player_stat_record(totals)["defcon"], 5.0)
 
     def test_mixed_week_keeps_both_league_matches_only(self):
         stats = load_gw_matchstats(2, self.base)

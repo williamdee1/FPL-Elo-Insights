@@ -15,23 +15,33 @@ from functools import lru_cache
 
 
 def defcon_samples(gw_start: int, gw_end: int, data_base: Path) -> dict:
-    """Observed league appearances only; absent per-match contribution is missing."""
+    """{player_id: [(defensive_contribution, matches), ...]}, one entry per gameweek played.
+
+    Values are FPL's official per-gameweek defensive contribution (CBIT for
+    defenders, CBIRT otherwise). The match-level source leaves that column
+    empty, so it only counts league appearances: a double gameweek has
+    matches > 1 and cannot say which match reached the threshold.
+    """
     samples = defaultdict(list)
     for gw in range(gw_start, gw_end + 1):
-        path = data_base / 'By Gameweek' / f'GW{gw}' / 'playermatchstats.csv'
-        if not path.exists():
+        played = load_gw_player_stats(gw, data_base)
+        if not played:
             continue
-        league = prem_match_ids(gw, data_base)
-        with path.open(encoding='utf-8-sig') as stream:
-            for row in csv.DictReader(stream):
-                if row.get('match_id') not in league or _float(row.get('minutes_played')) <= 0:
-                    continue
-                raw = row.get('defensive_contributions')
-                if raw is None or raw == '':
-                    continue
-                value = float(raw)
-                if math.isfinite(value) and value >= 0:
-                    samples[row['player_id']].append(value)
+        league_apps: dict = defaultdict(int)
+        match_path = data_base / 'By Gameweek' / f'GW{gw}' / 'playermatchstats.csv'
+        if match_path.exists():
+            league = prem_match_ids(gw, data_base)
+            with match_path.open(encoding='utf-8-sig') as stream:
+                for row in csv.DictReader(stream):
+                    if row.get('match_id') in league and _float(row.get('minutes_played')) > 0:
+                        league_apps[row['player_id']] += 1
+        for pid, row in played.items():
+            raw = row.get('defensive_contribution')
+            if raw is None or raw == '':
+                continue
+            value = float(raw)
+            if math.isfinite(value) and value >= 0:
+                samples[pid].append((value, max(1, league_apps[pid])))
     return dict(samples)
 
 # ── Position helpers ──────────────────────────────────────────────────────────
@@ -272,7 +282,8 @@ def compute_player_stat_record(totals: dict) -> dict:
         "key_passes":  round(totals["key_passes"] / minutes * 90, 2),
         # Goals prevented per game: xGC - actual goals conceded
         "g_prev":      round((xgc - gc) / minutes * 90, 4),
-        "defcon":      round(totals["clearances_blocks_interceptions"], 1),
+        # Per appearance, like the per-match DefCon threshold (games = gameweeks with minutes).
+        "defcon":      round(totals["clearances_blocks_interceptions"] / games, 1),
         "saves":       round(saves, 1),
         "goals_conceded": round(gc, 1),
         "save_pct":    round(saves / (saves + gc), 3) if (saves + gc) > 0 else 0.0,

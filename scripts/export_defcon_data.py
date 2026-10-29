@@ -1,8 +1,8 @@
 """
 Export DefCon Monsters data for the SquadAI Form tab.
 
-"DefCon" = clearances + blocks + interceptions (per game).
-Top 5 defenders and midfielders by recent DefCon/game.
+"DefCon" = FPL defensive contributions per appearance (CBIT for DEF, CBIRT for MID).
+Top defenders and midfielders by recent DefCon/game.
 
 Run from repo root:
     conda run -n fpl python FPL-Elo-Insights/scripts/export_defcon_data.py
@@ -28,7 +28,8 @@ LAST_COMPLETE_GW = 4   # last GW with completed data
 RECENT_GWS    = 4   # recent window for DefCon/game ranking
 DEF_THRESHOLD = 10  # "≥10 = FPL defensive pts" display label
 MID_THRESHOLD = 12
-TOP_N         = 5
+TOP_N         = 15
+MIN_GAMES     = 2   # one big game should not top the table
 
 
 def main():
@@ -39,33 +40,28 @@ def main():
 
     # Season window (for seasonPer90 baseline)
     season_totals = accumulate_player_stats(1, LAST_COMPLETE_GW, DATA_26_27)
-    # Recent window
-    recent_totals = accumulate_player_stats(recent_start, LAST_COMPLETE_GW, DATA_26_27)
     samples = defcon_samples(recent_start, LAST_COMPLETE_GW, DATA_26_27)
 
     results: dict = {"DEF": [], "MID": []}
 
-    for pid, r_tot in recent_totals.items():
-        if r_tot["games"] == 0:
-            continue
+    for pid, observed in samples.items():
         m = meta.get(pid)
         if not m or m["position"] not in ("DEF", "MID"):
             continue
-
-        observed = samples.get(pid, [])
-        appearances = r_tot.get('matchesPlayed', 0)
-        if not appearances:
+        games = sum(matches for _, matches in observed)
+        if games < MIN_GAMES:
             continue
-        recent_per_game = sum(observed) / len(observed) if observed else r_tot["clearances_blocks_interceptions"] / appearances
+        recent_per_game = sum(value for value, _ in observed) / games
 
         s_tot = season_totals.get(pid)
         season_per_90 = 0.0
         if s_tot and s_tot["minutes"] > 0:
             season_per_90 = s_tot["clearances_blocks_interceptions"] / s_tot["minutes"] * 90
 
-        # Consistency: % of recent games where DefCon/game ≥ threshold
+        # Consistency: share of single-match gameweeks at or above the threshold
         threshold = DEF_THRESHOLD if m["position"] == "DEF" else MID_THRESHOLD
-        consistency = sum(value >= threshold for value in observed) / len(observed) * 100 if observed else None
+        single = [value for value, matches in observed if matches == 1]
+        hits = sum(value >= threshold for value in single)
 
         results[m["position"]].append({
             "id":              int(pid),
@@ -75,9 +71,10 @@ def main():
             "ownership":       m["ownership"],
             "recentPerGame":   round(recent_per_game, 1),
             "seasonPer90":     round(season_per_90, 1),
-            "consistencyPct":  round(consistency, 1) if consistency is not None else None,
-            "consistencySample": len(observed),
-            "recentGames":     len(observed) if observed else appearances,
+            "consistencyPct":  round(hits / len(single) * 100, 1) if single else None,
+            "consistencyHits": hits,
+            "consistencySample": len(single),
+            "recentGames":     games,
             "threshold":       threshold,
         })
 
