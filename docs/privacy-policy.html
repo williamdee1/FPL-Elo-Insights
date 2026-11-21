@@ -24,7 +24,7 @@
 <body>
 
   <h1>SquadAI — Privacy Policy</h1>
-  <p class="updated">Last updated: 29 October 2026</p>
+  <p class="updated">Last updated: 9 November 2026</p>
 
   <p>
     SquadAI is a Fantasy Premier League companion app. This policy explains what
@@ -42,6 +42,16 @@
     <li>
       <strong>FPL Team ID</strong> — a numeric ID you optionally enter to link your
       Fantasy Premier League team. Stored locally on your device.
+    </li>
+    <li>
+      <strong>FPL account connection (optional)</strong> — if you choose to connect
+      your FPL account, you log in on the official FPL website inside the app. Your
+      email and password go only to the Premier League; SquadAI does not see or
+      store them. FPL then gives the app a sign-in token, which is kept in your
+      device's encrypted storage and sent only to the Premier League, to read your
+      own team (including transfers made since the last deadline, which FPL does
+      not show publicly). SquadAI never changes anything in your FPL team. You can
+      disconnect at any time from the Overview menu, which deletes the token.
     </li>
     <li>
       <strong>Purchase records</strong> — if you buy an Advisor pass, a record of
@@ -74,8 +84,10 @@
     <li>
       <strong>Fantasy Premier League API</strong>
       (<a href="https://fantasy.premierleague.com">fantasy.premierleague.com</a>) —
-      a public API operated by the Premier League. Used to retrieve player data,
-      fixtures, and your squad. No credentials are sent.
+      operated by the Premier League. Used to retrieve player data, fixtures, and
+      your squad. No credentials are sent unless you connect your FPL account, in
+      which case the sign-in token described above is sent to the Premier League
+      (account.premierleague.com and fantasy.premierleague.com) to read your team.
     </li>
     <li>
       <strong>Google Sign-In / Sign in with Apple</strong> — authentication is
@@ -107,8 +119,11 @@
   <h2>4. Data Storage and Retention</h2>
   <p>
     Your sign-in details, FPL Team ID and saved plans are kept locally on your
-    device (AsyncStorage). You can clear them at any time by signing out or
-    clearing the app's storage in your device settings. Purchase records are kept
+    device (AsyncStorage). If you connect your FPL account, its sign-in token and
+    your last-read team are kept in the device's encrypted storage until you
+    disconnect, clear local data or uninstall the app. You can clear local data at
+    any time from the Overview menu or by clearing the app's storage in your
+    device settings. Purchase records are kept
     by RevenueCat for as long as needed to provide your passes and meet tax and
     accounting obligations. Crash reports are retained by Sentry for a limited
     period and then deleted.
